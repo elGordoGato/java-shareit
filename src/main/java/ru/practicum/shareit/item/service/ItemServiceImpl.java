@@ -37,8 +37,8 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto update(Long itemId, long userId, ItemDto itemDto) {
-        Item targetItem = itemRepository.findById(itemId).
-                orElseThrow(() -> new NotFoundException(
+        Item targetItem = itemRepository.findById(itemId)
+                .orElseThrow(() -> new NotFoundException(
                         String.format("Item with id %s not found when trying to update it", itemId)));
         if (!targetItem.getOwner().getId().equals(userId)) {
             throw new ForbiddenException(
