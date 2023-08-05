@@ -6,12 +6,12 @@ import java.util.Optional;
 public interface UserStorage {
     List<User> findAll();
 
-    User save(User user);
+    User add(User user);
 
 
     User update(User targetUser, User user);
 
     Optional<User> findById(Long userId);
 
-    int deleteUserById(Long userId);
+    int deleteById(Long userId);
 }

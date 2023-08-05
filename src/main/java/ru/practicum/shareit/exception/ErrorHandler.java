@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.CONFLICT)
-    public Map<String, List<String>> handleAlreadyExistException(final AlreadyExistException e) {
+    public Map<String, List<String>> handleConflictException(final ConflictException e) {
         List<String> errors = List.of(e.getMessage());
         log.warn(errors.toString());
         return Map.of(HttpStatus.CONFLICT.getReasonPhrase(), errors);

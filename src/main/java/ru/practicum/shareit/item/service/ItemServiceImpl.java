@@ -25,50 +25,65 @@ public class ItemServiceImpl implements ItemService {
     private final ItemStorage itemRepository;
 
     @Override
-    public ItemDto addItem(ItemDto item, long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Данный пользователь не найден"));
-        return ItemMapper.itemToDto(itemRepository.saveItem(ItemMapper.dtoToItem(item, user)), 0);
+    public ItemDto create(ItemDto item, long userId) {
+        User creatingUser = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("User with id %s not found when trying to create item: %s", userId, item)));
+        Item itemCreated = itemRepository.add(
+                ItemMapper.dtoToItem(item, creatingUser));
+        log.info("Item created: {}", itemCreated);
+        return ItemMapper.itemToDto(itemCreated, 0);
     }
 
     @Override
-    public ItemDto updateItem(Long itemId, long userId, ItemDto itemDto) {
-        Item targetItem = itemRepository.findById(itemId).orElseThrow(() -> new NotFoundException("Данный товар не найден"));
+    public ItemDto update(Long itemId, long userId, ItemDto itemDto) {
+        Item targetItem = itemRepository.findById(itemId).
+                orElseThrow(() -> new NotFoundException(
+                        String.format("Item with id %s not found when trying to update it", itemId)));
         if (!targetItem.getOwner().getId().equals(userId)) {
             throw new ForbiddenException(
                     String.format("У пользователя %s нет прав редактирровать товар %s", userId, itemId));
         }
-        log.info(String.valueOf(targetItem.toString().hashCode()));
         int rentCount = itemRepository.findRentCount(targetItem);
-        return ItemMapper.itemToDto(itemRepository.update(
-                        targetItem, ItemMapper.dtoToItem(itemDto, targetItem.getOwner())),
-                rentCount);
+        Item updated = itemRepository.update(targetItem, ItemMapper.dtoToItem(itemDto, targetItem.getOwner()));
+        log.info("Item with ID: {} updated - new data: {}", itemId, updated);
+        return ItemMapper.itemToDto(updated, rentCount);
     }
 
     @Override
-    public ItemDto getItemById(long itemId, long userId) {
-        Item targetItem = itemRepository.findById(itemId).orElseThrow(() -> new NotFoundException("Данный товар не найден"));
+    public ItemDto getById(long itemId, long userId) {
+        Item targetItem = itemRepository.findById(itemId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Item with id %s not found when trying to get it", itemId)));
+        log.info("Item found: {}", targetItem);
         return ItemMapper.itemToDto(targetItem, itemRepository.findRentCount(targetItem));
     }
 
     @Override
-    public List<ItemDto> getAllItems(long userId) {
+    public List<ItemDto> getAllForUser(long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Данный пользователь не найден"));
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("User with id %s not found when trying to get his items", userId)));
         Map<Item, Integer> foundItems = itemRepository.findAllItemsByUser(user);
-        return foundItems.keySet().stream().map(item -> ItemMapper.itemToDto(item, foundItems.get(item)))
+        log.info("Found {} items of user with id: {}", foundItems.size(), userId);
+        return foundItems.keySet().stream()
+                .map(item -> ItemMapper.itemToDto(item, foundItems.get(item)))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<ItemDto> searchItemByNameAndDescr(String text, long userId) {
+    public List<ItemDto> searchByNameAndDescr(String text, long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Данный пользователь не найден"));
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("User with id %s not found when trying to search for item by %s", userId, text)));
         if (text.isBlank()) {
+            log.info("No text for search entered");
             return Collections.emptyList();
         }
-        Map<Item, Integer> foundItems = itemRepository.findItemsByNameAndDescr(text.toLowerCase(), user);
-        return foundItems.keySet().stream().map(item -> ItemMapper.itemToDto(item, foundItems.get(item)))
+        Map<Item, Integer> foundItems = itemRepository.findByNameAndDescr(text.toLowerCase(), user);
+        log.info("Found {} items containing {}", foundItems.size(), text);
+        return foundItems.keySet().stream()
+                .map(item -> ItemMapper.itemToDto(item, foundItems.get(item)))
                 .collect(Collectors.toList());
     }
 }

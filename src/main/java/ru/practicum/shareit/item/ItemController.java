@@ -21,35 +21,35 @@ public class ItemController {
 
 
     @PostMapping
-    public ItemDto addNewItem(@RequestBody @Valid ItemDto item, @RequestHeader("X-Sharer-User-Id") long userId) {
+    public ItemDto create(@RequestBody @Valid ItemDto item, @RequestHeader("X-Sharer-User-Id") long userId) {
         log.info("Received request from user with id: {} to create item: {}", userId, item);
-        return itemService.addItem(item, userId);
+        return itemService.create(item, userId);
     }
 
     @PatchMapping("/{itemId}")
-    public ItemDto updateExistedUser(@PathVariable Long itemId,
-                                     @RequestHeader("X-Sharer-User-Id") long userId,
-                                     @RequestBody ItemDto itemDto) {
-        log.info("Received request to update item with id: {}, new data: {}", itemId, itemDto);
-        return itemService.updateItem(itemId, userId, itemDto);
+    public ItemDto update(@PathVariable Long itemId,
+                          @RequestHeader("X-Sharer-User-Id") long userId,
+                          @RequestBody ItemDto itemDto) {
+        log.info("Received request from user with Id {} to update item with id: {}, new data: {}",
+                userId, itemId, itemDto);
+        return itemService.update(itemId, userId, itemDto);
     }
 
-    //GET /items/{itemId}
     @GetMapping("/{itemId}")
-    public ItemDto getItemById(@PathVariable long itemId, @RequestHeader("X-Sharer-User-Id") long userId) {
+    public ItemDto getById(@PathVariable long itemId, @RequestHeader("X-Sharer-User-Id") long userId) {
         log.info("Received request from user {} to get item with id: {}", userId, itemId);
-        return itemService.getItemById(itemId, userId);
+        return itemService.getById(itemId, userId);
     }
 
     @GetMapping
-    public List<ItemDto> getAllUsers(@RequestHeader("X-Sharer-User-Id") long userId) {
+    public List<ItemDto> getAllForUser(@RequestHeader("X-Sharer-User-Id") long userId) {
         log.info("Received request from user {} to get all items", userId);
-        return itemService.getAllItems(userId);
+        return itemService.getAllForUser(userId);
     }
 
     @GetMapping("/search")
-    public List<ItemDto> searchItemByNameAndDescr(@RequestParam String text, @RequestHeader("X-Sharer-User-Id") long userId) {
+    public List<ItemDto> searchByNameAndDescr(@RequestParam String text, @RequestHeader("X-Sharer-User-Id") long userId) {
         log.info("Received request from user {} to search items containing: {}", userId, text);
-        return itemService.searchItemByNameAndDescr(text, userId);
+        return itemService.searchByNameAndDescr(text, userId);
     }
 }

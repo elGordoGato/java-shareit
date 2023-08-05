@@ -1,7 +1,7 @@
 package ru.practicum.shareit.user;
 
 import org.springframework.stereotype.Repository;
-import ru.practicum.shareit.exception.AlreadyExistException;
+import ru.practicum.shareit.exception.ConflictException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,14 +18,16 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User save(User user) {
+    public User add(User user) {
         checkEmailForExistence(user.getEmail());
-        user.setId(Optional.ofNullable(user.getId()).orElseGet(() -> {
-            while (storedUsers.stream().anyMatch(u -> u.getId().equals(idCounter))) {
-                idCounter++;
-            }
-            return idCounter++;
-        }));
+        user.setId(Optional.ofNullable(user.getId())
+                .orElseGet(() -> {
+                    while (storedUsers.stream()
+                            .anyMatch(u -> u.getId().equals(idCounter))) {
+                        idCounter++;
+                    }
+                    return idCounter++;
+                }));
         storedUsers.add(user);
         return user;
     }
@@ -44,12 +46,13 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public Optional<User> findById(Long userId) {
-        return storedUsers.stream().filter(user -> user.getId().equals(userId))
+        return storedUsers.stream()
+                .filter(user -> user.getId().equals(userId))
                 .findFirst();
     }
 
     @Override
-    public int deleteUserById(Long userId) {
+    public int deleteById(Long userId) {
         return findById(userId).map(user -> {
             storedUsers.remove(user);
             return 1;
@@ -57,8 +60,10 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     private void checkEmailForExistence(String email) {
-        if (storedUsers.stream().anyMatch(u -> u.getEmail().equals(email))) {
-            throw new AlreadyExistException("Данный адрес электронной почты уже занят");
+        if (storedUsers.stream()
+                .anyMatch(u -> u.getEmail().equals(email))) {
+            throw new ConflictException(
+                    String.format("Адрес электронной почты: %s уже занят", email));
         }
 
     }

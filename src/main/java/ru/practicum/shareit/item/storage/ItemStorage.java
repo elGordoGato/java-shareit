@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface ItemStorage {
-    Item saveItem(Item item);
+    Item add(Item item);
 
     Optional<Item> findById(Long itemId);
 
@@ -17,5 +17,5 @@ public interface ItemStorage {
 
     Map<Item, Integer> findAllItemsByUser(User user);
 
-    Map<Item, Integer> findItemsByNameAndDescr(String text, User user);
+    Map<Item, Integer> findByNameAndDescr(String text, User user);
 }
