@@ -7,7 +7,7 @@ import ru.practicum.shareit.user.User;
 import java.util.Map;
 import java.util.Optional;
 
-public interface ItemStorage extends JpaRepository<Item, Long> {
+public interface ItemStorage {
     Item add(Item item);
 
     Optional<Item> findById(Long itemId);
