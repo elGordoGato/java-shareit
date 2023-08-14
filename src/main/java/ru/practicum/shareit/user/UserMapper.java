@@ -1,20 +1,14 @@
 package ru.practicum.shareit.user;
 
+import java.time.Instant;
+
 public class UserMapper {
     public static User dtoToUser(UserDto dto) {
-        return User.builder()
-                .id(dto.getId())
-                .name(dto.getName())
-                .email(dto.getEmail())
-                .build();
+        return new User(dto.getId(), dto.getName(), dto.getEmail(), Instant.now());
     }
 
     public static UserDto userToDto(User user) {
-        return UserDto.builder()
-                .id(user.getId())
-                .name(user.getName())
-                .email(user.getEmail())
-                .build();
+        return new UserDto(user.getId(), user.getName(), user.getEmail());
     }
 
 }

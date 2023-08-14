@@ -1,12 +1,13 @@
 package ru.practicum.shareit.item.storage;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.User;
 
 import java.util.Map;
 import java.util.Optional;
 
-public interface ItemStorage {
+public interface ItemStorage extends JpaRepository<Item, Long> {
     Item add(Item item);
 
     Optional<Item> findById(Long itemId);

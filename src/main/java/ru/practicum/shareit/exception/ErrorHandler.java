@@ -1,6 +1,7 @@
 package ru.practicum.shareit.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -55,5 +56,12 @@ public class ErrorHandler {
         List<String> errors = List.of(e.getMessage());
         log.warn(errors.toString());
         return Map.of(HttpStatus.FORBIDDEN.getReasonPhrase(), errors);
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Map<String, List<String>> handleConstraintViolationException(final ConstraintViolationException e){
+        List<String> errors = List.of(e.getCause().getLocalizedMessage());
+        return Map.of(HttpStatus.CONFLICT.getReasonPhrase(), errors);
     }
 }
