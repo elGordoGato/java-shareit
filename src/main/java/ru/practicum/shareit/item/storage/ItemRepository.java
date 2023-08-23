@@ -1,21 +1,24 @@
 package ru.practicum.shareit.item.storage;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import ru.practicum.shareit.item.model.Item;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-    public interface ItemRepository extends JpaRepository<Item, Long> {
+public interface ItemRepository extends JpaRepository<Item, Long> {
 
-        //List<Item> findByUserId(long userId);
+    //List<Item> findByUserId(long userId);
 
-        //Optional<Item> findByUserIdAndUrl(long userId, String url);
+    //Optional<Item> findByUserIdAndUrl(long userId, String url);
 
-        /*List<ItemInfo> findAllByUserId(Long userId);
+    List<Item> findAllByOwnerId(Long ownerId);
+
+    List<Item> findAllByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCaseAndAvailableTrue(
+            String text, String sameText);
+
+    Optional<Item> findByIdIsAndOwnerIdNot(Long itemId, long bookerId);
+        /*
 
         @Query("select it " +
                 "from Item as it " +

@@ -10,5 +10,5 @@ public enum Status {
     APPROVED("Подтверждено"),
     REJECTED("Отклонено");
 
-    private final String operation;
+    private final String status;
 }

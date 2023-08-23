@@ -10,24 +10,25 @@ import java.util.Objects;
  * TODO Sprint add-controllers.
  */
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Getter
+@Setter
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "items")
+@ToString
 public class Item {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column
+    @Column(nullable = false)
     private String name;
 
     @Column
     private String description;
 
-    @Column
+    @Column(nullable = false)
     private Boolean available;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -39,7 +40,7 @@ public class Item {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Item)) return false;
-        return id != null && id.equals(((Item) o).getId());
+        return id.equals(((Item) o).getId());
     }
 
     @Override

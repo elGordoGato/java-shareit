@@ -47,7 +47,7 @@ public class UserServiceImpl implements UserService {
     public UserDto update(Long userId, UserDto withNewData) {
         User toBeUpdated = repository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(
-                    String.format("User with id %s not found when trying to update it", userId)));
+                        String.format("User with id %s not found when trying to update it", userId)));
         Optional.ofNullable(withNewData.getName()).ifPresent(toBeUpdated::setName);
         Optional.ofNullable(withNewData.getEmail()).ifPresent(toBeUpdated::setEmail);
         log.info("User with ID {} updated - new data: {}", userId, toBeUpdated);

@@ -4,9 +4,9 @@ logging:
             springframework:
                 orm:
                     jpa: INFO
-                    jpa.JpaTransactionManager: DEBUG
-                transaction: INFO
-                transaction.interceptor: TRACE
+                    jpa.JpaTransactionManager: WARN
+                transaction: WARN
+                transaction.interceptor: WARN
         ru:
             practicum:
                 shareit: DEBUG
@@ -17,9 +17,10 @@ spring:
     datasource:
         driverClassName: org.h2.Driver
         password: test
-        url: jdbc:h2:mem:shareit
+        url: jdbc:h2:file:./db/filmorate
         username: test
     jpa:
+        show-sql: true
         hibernate:
             ddl-auto: none
         properties:

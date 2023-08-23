@@ -13,5 +13,5 @@ public enum State {
     WAITING("Ожидают подтверждения"),
     REJECTED("Отклоненные");
 
-    private final String operation;
+    private final String state;
 }
