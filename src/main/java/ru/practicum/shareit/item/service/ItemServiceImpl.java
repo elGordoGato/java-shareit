@@ -114,7 +114,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> searchByNameAndDescr(String text, long userId) {
-        if (!userRepository.existsById(userId)){
+        if (!userRepository.existsById(userId)) {
                  throw new NotFoundException(
                         String.format("User with id %s not found when trying to search for item by %s", userId, text));
         }
