@@ -4,14 +4,12 @@ import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.User;
-
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class CommentMapper {
     public static Comment dtoToComment(CommentDto dto, Item item, User author) {
-        return new Comment(dto.getId(), dto.getText(), item, author, LocalDateTime.now());
+        return new Comment(dto.getId(), dto.getText(), item, author);
 
     }
 

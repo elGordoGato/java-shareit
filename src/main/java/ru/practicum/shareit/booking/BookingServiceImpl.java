@@ -3,13 +3,9 @@ package ru.practicum.shareit.booking;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.MethodParameter;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.BeanPropertyBindingResult;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingRequest;
@@ -46,8 +42,8 @@ public class BookingServiceImpl implements BookingService {
                         bookerId, bookingRequest.getItemId())));
         Item item = itemRepository.findByIdIsAndOwnerIdNot(bookingRequest.getItemId(), bookerId).orElseThrow(
                 () -> new NotFoundException(
-                String.format("Item with id %s not found when trying to book it by user %s",
-                        bookingRequest.getItemId(), bookerId)));
+                        String.format("Item with id %s not found when trying to book it by user %s",
+                                bookingRequest.getItemId(), bookerId)));
         if (!item.getAvailable()) {
             new BadRequestException(item, "item", "Item is not available",
                     this.getClass().getMethod("create", BookingRequest.class, long.class));

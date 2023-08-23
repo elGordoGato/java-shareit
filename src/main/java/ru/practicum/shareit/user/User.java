@@ -23,11 +23,14 @@ import java.time.LocalDateTime;
 public class User {
     @Column(name = "registration_date")
     private final LocalDateTime registrationDate = LocalDateTime.now();
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Column(nullable = false)
     private String name;
+
     @Column(nullable = false, unique = true)
     @Email(message = "Email должен быть корректным адресом электронной почты")
     private String email;

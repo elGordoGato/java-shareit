@@ -17,7 +17,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, Queryds
     List<Booking> findAllByDateInterfering(LocalDateTime start, LocalDateTime end);
 
 
-    @Query( "SELECT new ru.practicum.shareit.booking.dto.BookingsByItem( " +
+    @Query("SELECT new ru.practicum.shareit.booking.dto.BookingsByItem( " +
             "   b1.item.id, b2, b3, COUNT(b1.id)) " +
             "FROM Booking b1 " +
             "LEFT JOIN Booking b2 ON b1.item.id = b2.item.id " +

@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item;
 
 import lombok.extern.slf4j.Slf4j;
+import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingMapper;
 import ru.practicum.shareit.booking.dto.BookingsByItem;
 import ru.practicum.shareit.item.dto.ItemDto;
@@ -10,7 +11,6 @@ import ru.practicum.shareit.user.User;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 public class ItemMapper {
@@ -18,29 +18,22 @@ public class ItemMapper {
         return new Item(dto.getId(), dto.getName(), dto.getDescription(), dto.getAvailable(), user);
     }
 
-    public static ItemDto itemToDto(Item item, BookingsByItem bookingsByItem1, List<Comment> comments) {
-        Optional<BookingsByItem> datesByItem = Optional.ofNullable(bookingsByItem1);
+    public static ItemDto itemToDto(Item item, BookingsByItem bookingsByItem, List<Comment> comments) {
         ItemDto itemDto = ItemDto.builder()
                 .id(item.getId())
                 .name(item.getName())
                 .description(item.getDescription())
                 .available(item.getAvailable())
+                .comments(CommentMapper.commentToDto(
+                        (comments != null) ? comments : Collections.emptyList()))
                 .build();
-        if (datesByItem.isPresent()) {
-            if (datesByItem.get().getLastBooking() != null) {
-                itemDto.setLastBooking(BookingMapper.bookingToShort(datesByItem.get().getLastBooking()));
-            }
-            if (datesByItem.get().getNextBooking() != null) {
-                itemDto.setNextBooking(BookingMapper.bookingToShort(datesByItem.get().getNextBooking()));
-            }
-            itemDto.setRentCounter(datesByItem.get().getRentCounter());
+        if (bookingsByItem != null) {
+            Booking lastBooking = bookingsByItem.getLastBooking();
+            Booking nextBooking = bookingsByItem.getNextBooking();
+            itemDto.setLastBooking((lastBooking != null) ? BookingMapper.bookingToShort(lastBooking) : null);
+            itemDto.setNextBooking((nextBooking != null) ? BookingMapper.bookingToShort(nextBooking) : null);
+            itemDto.setRentCounter(bookingsByItem.getRentCounter());
         }
-        if (comments == null) {
-            itemDto.setComments(Collections.emptyList());
-        } else {
-            itemDto.setComments(CommentMapper.commentToDto(comments));
-        }
-        log.info(itemDto.toString());
         return itemDto;
     }
 }

@@ -31,5 +31,5 @@ public class Comment {
     private User author;
 
     @Column
-    private LocalDateTime created = LocalDateTime.now();
+    private final LocalDateTime created = LocalDateTime.now();
 }

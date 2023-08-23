@@ -2,11 +2,7 @@ package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Service;
-import org.springframework.validation.BeanPropertyBindingResult;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.dto.BookingsByItem;
@@ -66,12 +62,12 @@ public class ItemServiceImpl implements ItemService {
                 .ifPresent(targetItem::setDescription);
         Optional.ofNullable(itemDto.getAvailable())
                 .ifPresent(targetItem::setAvailable);
-        targetItem = itemRepository.save(targetItem);                                                                   /* TODO ??? */
+        targetItem = itemRepository.save(targetItem);
         log.info("Item with ID: {} updated - new data: {}", itemId, targetItem);
-        List<BookingsByItem> bookingsByItemList = bookingRepository.findDatesByItemId(List.of(itemId), LocalDateTime.now());
+        List<BookingsByItem> bookingsByItemList = bookingRepository.findDatesByItemId(
+                List.of(itemId), LocalDateTime.now());
         BookingsByItem dateByItem = bookingsByItemList.stream().findAny().orElse(null);
         List<Comment> comments = commentRepository.findAllByItemIdIn(Collections.singletonList(itemId));
-
         return ItemMapper.itemToDto(targetItem, dateByItem, comments);
     }
 
@@ -81,15 +77,16 @@ public class ItemServiceImpl implements ItemService {
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Item with id %s not found when trying to get it", itemId)));
         log.info("Item found: {}", targetItem);
-        List<BookingsByItem> bookingsByItemList;
+        BookingsByItem dateByItem;
         if (targetItem.getOwner().getId().equals(userId)) {
-            bookingsByItemList = bookingRepository.findDatesByItemId(Collections.singletonList(itemId), LocalDateTime.now());
+            List<BookingsByItem> bookingsByItemList = bookingRepository.findDatesByItemId(
+                    Collections.singletonList(itemId), LocalDateTime.now());
+            dateByItem = bookingsByItemList.stream().findAny().orElse(null);
         } else {
-            bookingsByItemList = Collections.emptyList();
+            dateByItem = null;
         }
-        BookingsByItem dateByItem = bookingsByItemList.stream().findAny().orElse(null);
         List<Comment> comments = commentRepository.findAllByItemIdIn(Collections.singletonList(itemId));
-        return ItemMapper.itemToDto(targetItem, dateByItem, comments);                                                            /* TODO Sprint add-bookings. */
+        return ItemMapper.itemToDto(targetItem, dateByItem, comments);
     }
 
     @Override
@@ -100,12 +97,14 @@ public class ItemServiceImpl implements ItemService {
         Map<Long, Item> itemMap = itemRepository.findAllByOwnerId(user.getId()).stream()
                 .collect(Collectors.toMap(Item::getId, Function.identity()));
         log.info("Found {} items of user with id: {}", itemMap.size(), userId);
-        Map<Long, BookingsByItem> bookingMap = bookingRepository.findDatesByItemId(new ArrayList<>(itemMap.keySet()), LocalDateTime.now()).stream()
-                .collect(Collectors.toMap(BookingsByItem::getItemId, Function.identity()));
-        Map<Long, List<Comment>> commentMap = commentRepository.findAllByItemIdIn(new ArrayList<>(itemMap.keySet())).stream()
-                .collect(Collectors.groupingBy(comment -> comment.getItem().getId()));
-        return itemMap.values()
+        Map<Long, BookingsByItem> bookingMap = bookingRepository.findDatesByItemId(
+                new ArrayList<>(itemMap.keySet()), LocalDateTime.now())
                 .stream()
+                .collect(Collectors.toMap(BookingsByItem::getItemId, Function.identity()));
+        Map<Long, List<Comment>> commentMap = commentRepository.findAllByItemIdIn(new ArrayList<>(itemMap.keySet()))
+                .stream()
+                .collect(Collectors.groupingBy(comment -> comment.getItem().getId()));
+        return itemMap.values().stream()
                 .map(item -> ItemMapper.itemToDto(
                         item,
                         bookingMap.get(item.getId()), commentMap.get(item.getId()))
@@ -115,30 +114,37 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> searchByNameAndDescr(String text, long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("User with id %s not found when trying to search for item by %s", userId, text)));
+        if (!userRepository.existsById(userId)){
+                 throw new NotFoundException(
+                        String.format("User with id %s not found when trying to search for item by %s", userId, text));
+        }
         if (text.isBlank()) {
             log.info("No text for search entered");
             return Collections.emptyList();
         }
-        Map<Long, Item> foundItems = itemRepository.findAllByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCaseAndAvailableTrue(text, text)
+        Map<Long, Item> foundItems = itemRepository
+                .findAllByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCaseAndAvailableTrue(text, text)
                 .stream()
                 .collect(Collectors.toMap(Item::getId, Function.identity()));
         log.info("Found {} items containing {}", foundItems.size(), text);
+        Map<Long, List<Comment>> commentMap = commentRepository.findAllByItemIdIn(new ArrayList<>(foundItems.keySet()))
+                .stream()
+                .collect(Collectors.groupingBy(comment -> comment.getItem().getId()));
         return foundItems.values().stream()
-                .map(item -> ItemMapper.itemToDto(item, null, null))
+                .map(item -> ItemMapper.itemToDto(item, null, commentMap.get(item.getId())))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public CommentDto create(CommentDto comment, long itemId, long userId) throws NoSuchMethodException, MethodArgumentNotValidException {
+    public CommentDto create(CommentDto comment, long itemId, long userId)
+            throws NoSuchMethodException, MethodArgumentNotValidException {
         User author = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("User with id %s not found when trying to create comment: %s", userId, comment)));
         Item item = itemRepository.findById(itemId).orElseThrow(() -> new NotFoundException(
                 String.format("Item with id %s not found when trying to comment it", itemId)));
-        if (!bookingRepository.existsByItemIdAndBookerIdAndEndBeforeAndStatus(itemId, userId, LocalDateTime.now(), Status.APPROVED)) {
+        if (!bookingRepository.existsByItemIdAndBookerIdAndEndBeforeAndStatus(
+                itemId, userId, LocalDateTime.now(), Status.APPROVED)) {
             new BadRequestException(comment, "comment",
                     String.format("User with id: %s did not rent item with id: %s to comment it", userId, itemId),
                     this.getClass().getMethod("create", CommentDto.class, long.class, long.class));

@@ -24,14 +24,14 @@ public class ItemDto {
     @NotBlank(message = "Необходимо указать описание")
     private final String description;
 
+    @NotNull(message = "Необходимо указать доступность для аренды")
+    private final Boolean available;
+
     private BookingShort lastBooking;
 
     private BookingShort nextBooking;
 
     private List<CommentDto> comments;
-
-    @NotNull(message = "Необходимо указать доступность для аренды")
-    private final Boolean available;
 
     private Long rentCounter;
 }

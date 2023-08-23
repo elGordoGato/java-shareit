@@ -5,7 +5,6 @@ import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import ru.practicum.shareit.booking.dto.BookingRequest;
 
 import java.lang.reflect.Method;
 
