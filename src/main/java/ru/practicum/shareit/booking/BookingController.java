@@ -3,7 +3,6 @@ package ru.practicum.shareit.booking;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingRequest;
@@ -29,8 +28,7 @@ public class BookingController {
 
     @PostMapping
     public BookingDto create(@RequestBody @Valid BookingRequest bookingRequest,
-                             @RequestHeader("X-Sharer-User-Id") long bookerId) throws MethodArgumentNotValidException,
-            NoSuchMethodException {
+                             @RequestHeader("X-Sharer-User-Id") long bookerId) {
         log.info("Received request from user with id: {} to book item: {} from {} to {}",
                 bookerId, bookingRequest.getItemId(), bookingRequest.getStart(), bookingRequest.getEnd());
         return bookingService.create(bookingRequest, bookerId);
@@ -40,8 +38,7 @@ public class BookingController {
     @PatchMapping("/{bookingId}")
     public BookingDto approve(@PathVariable Long bookingId,
                               @RequestHeader("X-Sharer-User-Id") long userId,
-                              @RequestParam boolean approved)
-            throws MethodArgumentNotValidException, NoSuchMethodException {
+                              @RequestParam boolean approved) {
         log.info("Received request from user with Id {} to " +
                 (approved ? "approve" : "reject") +
                 " booking with id: {}", userId, bookingId);

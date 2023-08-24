@@ -2,7 +2,6 @@ package ru.practicum.shareit.item;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
@@ -61,8 +60,7 @@ public class ItemController {
     @PostMapping("/{itemId}/comment")
     public CommentDto create(@RequestBody @Valid CommentDto comment,
                              @PathVariable long itemId,
-                             @RequestHeader("X-Sharer-User-Id") long userId)
-            throws NoSuchMethodException, MethodArgumentNotValidException {
+                             @RequestHeader("X-Sharer-User-Id") long userId) {
         log.info("Received request from user with id: {} to create comment: {} about item with id: {} ",
                 userId, comment, itemId);
         return itemService.create(comment, itemId, userId);

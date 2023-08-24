@@ -31,7 +31,8 @@ public class ErrorHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, List<String>> handleNotValidException(final MethodArgumentNotValidException e) {
         List<String> errors = e.getBindingResult().getFieldErrors()
-                .stream().map(DefaultMessageSourceResolvable::getDefaultMessage).collect(Collectors.toList());
+                .stream().map(DefaultMessageSourceResolvable::getDefaultMessage)
+                .collect(Collectors.toList());
         if (errors.isEmpty()) {
             errors.add((Objects.requireNonNull(e.getGlobalError())).getDefaultMessage());
         }
@@ -85,5 +86,13 @@ public class ErrorHandler {
         List<String> errors = List.of(e.getCause().getCause().getLocalizedMessage());
         log.warn(errors.toString());
         return Map.of(HttpStatus.CONFLICT.getReasonPhrase(), errors);
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, List<String>> handleBadRequestException(final BadRequestException e) {
+        List<String> errors = List.of(e.getMessage());
+        log.warn(errors.toString());
+        return Map.of(HttpStatus.BAD_REQUEST.getReasonPhrase(), errors);
     }
 }

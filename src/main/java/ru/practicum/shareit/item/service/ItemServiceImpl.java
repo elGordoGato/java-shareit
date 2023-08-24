@@ -3,7 +3,6 @@ package ru.practicum.shareit.item.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.dto.BookingsByItem;
 import ru.practicum.shareit.booking.status.Status;
@@ -66,7 +65,9 @@ public class ItemServiceImpl implements ItemService {
         log.info("Item with ID: {} updated - new data: {}", itemId, targetItem);
         List<BookingsByItem> bookingsByItemList = bookingRepository.findDatesByItemId(
                 List.of(itemId), LocalDateTime.now());
-        BookingsByItem dateByItem = bookingsByItemList.stream().findAny().orElse(null);
+        BookingsByItem dateByItem = bookingsByItemList.stream()
+                .findAny()
+                .orElse(null);
         List<Comment> comments = commentRepository.findAllByItemIdIn(Collections.singletonList(itemId));
         return ItemMapper.itemToDto(targetItem, dateByItem, comments);
     }
@@ -81,7 +82,9 @@ public class ItemServiceImpl implements ItemService {
         if (targetItem.getOwner().getId().equals(userId)) {
             List<BookingsByItem> bookingsByItemList = bookingRepository.findDatesByItemId(
                     Collections.singletonList(itemId), LocalDateTime.now());
-            dateByItem = bookingsByItemList.stream().findAny().orElse(null);
+            dateByItem = bookingsByItemList.stream()
+                    .findAny()
+                    .orElse(null);
         } else {
             dateByItem = null;
         }
@@ -94,11 +97,12 @@ public class ItemServiceImpl implements ItemService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("User with id %s not found when trying to get his items", userId)));
-        Map<Long, Item> itemMap = itemRepository.findAllByOwnerId(user.getId()).stream()
+        Map<Long, Item> itemMap = itemRepository.findAllByOwnerId(user.getId())
+                .stream()
                 .collect(Collectors.toMap(Item::getId, Function.identity()));
         log.info("Found {} items of user with id: {}", itemMap.size(), userId);
         Map<Long, BookingsByItem> bookingMap = bookingRepository.findDatesByItemId(
-                new ArrayList<>(itemMap.keySet()), LocalDateTime.now())
+                        new ArrayList<>(itemMap.keySet()), LocalDateTime.now())
                 .stream()
                 .collect(Collectors.toMap(BookingsByItem::getItemId, Function.identity()));
         Map<Long, List<Comment>> commentMap = commentRepository.findAllByItemIdIn(new ArrayList<>(itemMap.keySet()))
@@ -115,8 +119,8 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<ItemDto> searchByNameAndDescr(String text, long userId) {
         if (!userRepository.existsById(userId)) {
-                 throw new NotFoundException(
-                        String.format("User with id %s not found when trying to search for item by %s", userId, text));
+            throw new NotFoundException(
+                    String.format("User with id %s not found when trying to search for item by %s", userId, text));
         }
         if (text.isBlank()) {
             log.info("No text for search entered");
@@ -136,8 +140,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public CommentDto create(CommentDto comment, long itemId, long userId)
-            throws NoSuchMethodException, MethodArgumentNotValidException {
+    public CommentDto create(CommentDto comment, long itemId, long userId) {
         User author = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("User with id %s not found when trying to create comment: %s", userId, comment)));
@@ -145,9 +148,8 @@ public class ItemServiceImpl implements ItemService {
                 String.format("Item with id %s not found when trying to comment it", itemId)));
         if (!bookingRepository.existsByItemIdAndBookerIdAndEndBeforeAndStatus(
                 itemId, userId, LocalDateTime.now(), Status.APPROVED)) {
-            new BadRequestException(comment, "comment",
-                    String.format("User with id: %s did not rent item with id: %s to comment it", userId, itemId),
-                    this.getClass().getMethod("create", CommentDto.class, long.class, long.class));
+            throw new BadRequestException(
+                    String.format("User with id: %s did not rent item with id: %s to comment it", userId, itemId));
         }
         Comment commentCreated = commentRepository.save(
                 CommentMapper.dtoToComment(comment, item, author));

@@ -6,11 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingRequest;
 import ru.practicum.shareit.booking.state.State;
-import ru.practicum.shareit.booking.status.Status;
 import ru.practicum.shareit.exception.BadRequestException;
 import ru.practicum.shareit.exception.ConflictException;
 import ru.practicum.shareit.exception.ForbiddenException;
@@ -22,6 +20,9 @@ import ru.practicum.shareit.user.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
+import static java.time.LocalDateTime.now;
+import static ru.practicum.shareit.booking.status.Status.*;
 
 @RequiredArgsConstructor
 @Service
@@ -35,18 +36,18 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public BookingDto create(BookingRequest bookingRequest, long bookerId)
-            throws NoSuchMethodException, MethodArgumentNotValidException {
-        User booker = userRepository.findById(bookerId).orElseThrow(() -> new NotFoundException(
-                String.format("User with id %s not found when trying to book item %s",
-                        bookerId, bookingRequest.getItemId())));
-        Item item = itemRepository.findByIdIsAndOwnerIdNot(bookingRequest.getItemId(), bookerId).orElseThrow(
-                () -> new NotFoundException(
+    public BookingDto create(BookingRequest bookingRequest, long bookerId) {
+        User booker = userRepository
+                .findById(bookerId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("User with id %s not found when trying to book item %s",
+                                bookerId, bookingRequest.getItemId())));
+        Item item = itemRepository.findByIdIsAndOwnerIdNot(bookingRequest.getItemId(), bookerId)
+                .orElseThrow(() -> new NotFoundException(
                         String.format("Item with id %s not found when trying to book it by user %s",
                                 bookingRequest.getItemId(), bookerId)));
         if (!item.getAvailable()) {
-            new BadRequestException(item, "item", "Item is not available",
-                    this.getClass().getMethod("create", BookingRequest.class, long.class));
+            throw new BadRequestException("Item is not available");
         }
         // Tests do not support these feature - not passing when enabled:
         //validateDate(bookingRequest.getStart(), bookingRequest.getEnd());
@@ -57,15 +58,13 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public BookingDto approve(Long bookingId, long userId, boolean approved)
-            throws NoSuchMethodException, MethodArgumentNotValidException {
-        Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> new NotFoundException(
-                String.format("Booking with id %s not found when trying to approve it by user %s",
-                        bookingId, userId)));
-        if (!booking.getStatus().equals(Status.WAITING)) {
-            new BadRequestException(booking, "booking",
-                    "Booking is already " + booking.getStatus().getStatus(),
-                    this.getClass().getMethod("approve", Long.class, long.class, boolean.class));
+    public BookingDto approve(Long bookingId, long userId, boolean approved) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Booking with id %s not found when trying to approve it by user %s",
+                                bookingId, userId)));
+        if (!booking.getStatus().equals(WAITING)) {
+            throw new BadRequestException("Booking is already " + booking.getStatus().getStatus());
         }
         if (booking.getBooker().getId().equals(userId)) {
             throw new NotFoundException(
@@ -75,7 +74,7 @@ public class BookingServiceImpl implements BookingService {
             throw new ForbiddenException(
                     String.format("User with id: %s has no rights to approve/reject booking: %s", userId, bookingId));
         }
-        booking.setStatus(approved ? Status.APPROVED : Status.REJECTED);
+        booking.setStatus(approved ? APPROVED : REJECTED);
         return BookingMapper.bookingToDto(bookingRepository.save(booking));
     }
 
@@ -84,9 +83,10 @@ public class BookingServiceImpl implements BookingService {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException("There is no user in database with id: " + userId);
         }
-        Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> new NotFoundException(
-                String.format("Booking with id %s not found when trying to get it by user %s",
-                        bookingId, userId)));
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("Booking with id %s not found when trying to get it by user %s",
+                                bookingId, userId)));
         if (!(booking.getItem().getOwner().getId().equals(userId) || booking.getBooker().getId().equals(userId))) {
             throw new NotFoundException(
                     String.format("User with id: %s has no rights to get booking: %s", userId, bookingId));
@@ -114,20 +114,20 @@ public class BookingServiceImpl implements BookingService {
                 byState = null;
                 break;
             case PAST:
-                byState = QBooking.booking.end.before(LocalDateTime.now());
+                byState = QBooking.booking.end.before(now());
                 break;
             case CURRENT:
-                byState = QBooking.booking.start.before(LocalDateTime.now())
-                        .and(QBooking.booking.end.after(LocalDateTime.now()));
+                byState = QBooking.booking.start.before(now())
+                        .and(QBooking.booking.end.after(now()));
                 break;
             case FUTURE:
-                byState = QBooking.booking.start.after(LocalDateTime.now());
+                byState = QBooking.booking.start.after(now());
                 break;
             case WAITING:
-                byState = QBooking.booking.status.eq(Status.WAITING);
+                byState = QBooking.booking.status.eq(WAITING);
                 break;
             case REJECTED:
-                byState = QBooking.booking.status.eq(Status.REJECTED);
+                byState = QBooking.booking.status.eq(REJECTED);
                 break;
             default:
                 throw new ForbiddenException("No such state" + state);
