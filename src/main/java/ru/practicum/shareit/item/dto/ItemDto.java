@@ -2,14 +2,18 @@ package ru.practicum.shareit.item.dto;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
+import ru.practicum.shareit.booking.dto.BookingShort;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
  * TODO Sprint add-controllers.
  */
 @Data
+@ToString
 @Builder
 public class ItemDto {
     private final Long id;
@@ -21,8 +25,13 @@ public class ItemDto {
     private final String description;
 
     @NotNull(message = "Необходимо указать доступность для аренды")
-    private Boolean available;
+    private final Boolean available;
 
-    private Integer rentCounter;
+    private BookingShort lastBooking;
 
+    private BookingShort nextBooking;
+
+    private List<CommentDto> comments;
+
+    private Long rentCounter;
 }

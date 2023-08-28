@@ -3,6 +3,7 @@ package ru.practicum.shareit.item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.service.ItemService;
 
@@ -21,7 +22,8 @@ public class ItemController {
 
 
     @PostMapping
-    public ItemDto create(@RequestBody @Valid ItemDto item, @RequestHeader("X-Sharer-User-Id") long userId) {
+    public ItemDto create(@RequestBody @Valid ItemDto item,
+                          @RequestHeader("X-Sharer-User-Id") long userId) {
         log.info("Received request from user with id: {} to create item: {}", userId, item);
         return itemService.create(item, userId);
     }
@@ -36,7 +38,8 @@ public class ItemController {
     }
 
     @GetMapping("/{itemId}")
-    public ItemDto getById(@PathVariable long itemId, @RequestHeader("X-Sharer-User-Id") long userId) {
+    public ItemDto getById(@PathVariable long itemId,
+                           @RequestHeader("X-Sharer-User-Id") long userId) {
         log.info("Received request from user {} to get item with id: {}", userId, itemId);
         return itemService.getById(itemId, userId);
     }
@@ -48,8 +51,18 @@ public class ItemController {
     }
 
     @GetMapping("/search")
-    public List<ItemDto> searchByNameAndDescr(@RequestParam String text, @RequestHeader("X-Sharer-User-Id") long userId) {
+    public List<ItemDto> searchByNameAndDescr(@RequestParam String text,
+                                              @RequestHeader("X-Sharer-User-Id") long userId) {
         log.info("Received request from user {} to search items containing: {}", userId, text);
         return itemService.searchByNameAndDescr(text, userId);
+    }
+
+    @PostMapping("/{itemId}/comment")
+    public CommentDto create(@RequestBody @Valid CommentDto comment,
+                             @PathVariable long itemId,
+                             @RequestHeader("X-Sharer-User-Id") long userId) {
+        log.info("Received request from user with id: {} to create comment: {} about item with id: {} ",
+                userId, comment, itemId);
+        return itemService.create(comment, itemId, userId);
     }
 }
