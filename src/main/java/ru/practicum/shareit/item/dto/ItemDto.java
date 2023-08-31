@@ -34,4 +34,6 @@ public class ItemDto {
     private List<CommentDto> comments;
 
     private Long rentCounter;
+
+    private Long requestId;
 }

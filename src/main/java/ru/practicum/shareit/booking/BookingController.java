@@ -2,6 +2,9 @@ package ru.practicum.shareit.booking;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
@@ -10,7 +13,11 @@ import ru.practicum.shareit.booking.state.State;
 import ru.practicum.shareit.exception.StateValidator;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
+
+import static org.springframework.data.domain.Sort.Direction.DESC;
 
 /**
  * TODO Sprint add-bookings.
@@ -55,18 +62,26 @@ public class BookingController {
 
     @GetMapping
     public List<BookingDto> getAllForBooker(@RequestHeader("X-Sharer-User-Id") long userId,
-                                            @RequestParam(defaultValue = "ALL") String state) {
+                                            @RequestParam(defaultValue = "ALL") String state,
+                                            @RequestParam(defaultValue = "0") @PositiveOrZero int from,
+                                            @RequestParam(defaultValue = "10") @Positive int size) {
+        Sort sort = Sort.by(DESC, "start");
+        Pageable page = PageRequest.of(from / size, size, sort);
         State stateEnum = StateValidator.checkState(state);
         log.info("Арендатор {} запросил предоставить {} его бронирования", userId, stateEnum.getState());
-        return bookingService.getAllForUserByState(userId, stateEnum, true);
+        return bookingService.getAllForUserByState(userId, stateEnum, true, page);
     }
 
 
     @GetMapping("/owner")
     public List<BookingDto> getAllForOwner(@RequestHeader("X-Sharer-User-Id") long userId,
-                                           @RequestParam(defaultValue = "ALL") String state) {
+                                           @RequestParam(defaultValue = "ALL") String state,
+                                           @RequestParam(defaultValue = "0") @PositiveOrZero int from,
+                                           @RequestParam(defaultValue = "10") @Positive int size) {
+        Sort sort = Sort.by(DESC, "start");
+        Pageable page = PageRequest.of(from / size, size, sort);
         State stateEnum = StateValidator.checkState(state);
         log.info("Владелец {} запросил предоставить {} бронирования его вещей", userId, stateEnum.getState());
-        return bookingService.getAllForUserByState(userId, stateEnum, false);
+        return bookingService.getAllForUserByState(userId, stateEnum, false, page);
     }
 }

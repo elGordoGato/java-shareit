@@ -3,7 +3,7 @@ package ru.practicum.shareit.booking;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static java.time.LocalDateTime.now;
+import static ru.practicum.shareit.booking.BookingMapper.*;
 import static ru.practicum.shareit.booking.status.Status.*;
 
 @RequiredArgsConstructor
@@ -37,11 +38,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingDto create(BookingRequest bookingRequest, long bookerId) {
-        User booker = userRepository
-                .findById(bookerId)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("User with id %s not found when trying to book item %s",
-                                bookerId, bookingRequest.getItemId())));
+        User booker = getUser(bookerId, "book item " + bookingRequest.getItemId());
         Item item = itemRepository.findByIdIsAndOwnerIdNot(bookingRequest.getItemId(), bookerId)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Item with id %s not found when trying to book it by user %s",
@@ -51,60 +48,47 @@ public class BookingServiceImpl implements BookingService {
         }
         // Tests do not support these feature - not passing when enabled:
         //validateDate(bookingRequest.getStart(), bookingRequest.getEnd());
-        Booking booking = bookingRepository.save(BookingMapper.requestToBooking(bookingRequest, booker, item));
+        Booking booking = bookingRepository.save(requestToBooking(bookingRequest, booker, item));
         log.info("Booking successfully created: {}", booking);
-        return BookingMapper.bookingToDto(booking);
+        return bookingToDto(booking);
     }
 
     @Override
     @Transactional
     public BookingDto approve(Long bookingId, long userId, boolean approved) {
-        Booking booking = bookingRepository.findById(bookingId)
+        Booking booking = bookingRepository.findByIdAndBookerIdNot(bookingId, userId)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Booking with id %s not found when trying to approve it by user %s",
                                 bookingId, userId)));
         if (!booking.getStatus().equals(WAITING)) {
             throw new BadRequestException("Booking is already " + booking.getStatus().getStatus());
         }
-        if (booking.getBooker().getId().equals(userId)) {
-            throw new NotFoundException(
-                    String.format("Booker with id: %s has no rights to approve/reject booking: %s", userId, bookingId));
-        }
         if (!booking.getItem().getOwner().getId().equals(userId)) {
             throw new ForbiddenException(
                     String.format("User with id: %s has no rights to approve/reject booking: %s", userId, bookingId));
         }
         booking.setStatus(approved ? APPROVED : REJECTED);
-        return BookingMapper.bookingToDto(bookingRepository.save(booking));
+        return bookingToDto(bookingRepository.save(booking));
     }
 
     @Override
     public BookingDto getById(long bookingId, long userId) {
-        if (!userRepository.existsById(userId)) {
-            throw new NotFoundException("There is no user in database with id: " + userId);
-        }
-        Booking booking = bookingRepository.findById(bookingId)
+        isUserExist(userId);
+        Booking booking = bookingRepository.findByIdAndByBookerOrOwner(bookingId, userId)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Booking with id %s not found when trying to get it by user %s",
                                 bookingId, userId)));
-        if (!(booking.getItem().getOwner().getId().equals(userId) || booking.getBooker().getId().equals(userId))) {
-            throw new NotFoundException(
-                    String.format("User with id: %s has no rights to get booking: %s", userId, bookingId));
-        }
-        return BookingMapper.bookingToDto(booking);
+        return bookingToDto(booking);
     }
 
     @Override
-    public List<BookingDto> getAllForUserByState(long userId, State state, boolean isBooker) {
-        if (!userRepository.existsById(userId)) {
-            throw new NotFoundException("There is no user in database with id: " + userId);
-        }
+    public List<BookingDto> getAllForUserByState(long userId, State state, boolean isBooker, Pageable page) {
+        isUserExist(userId);
         BooleanExpression byUserId = isBooker ? QBooking.booking.booker.id.eq(userId) :
                 QBooking.booking.item.owner.id.eq(userId);
         BooleanExpression byState = getConditionByState(state);
-        Sort sort = Sort.by(Sort.Direction.DESC, "start");
-        Iterable<Booking> foundItems = bookingRepository.findAll(byUserId.and(byState), sort);
-        return BookingMapper.convertToDtoList(foundItems);
+        Iterable<Booking> foundItems = bookingRepository.findAll(byUserId.and(byState), page);
+        return convertToDtoList(foundItems);
     }
 
     private BooleanExpression getConditionByState(State state) {
@@ -134,6 +118,20 @@ public class BookingServiceImpl implements BookingService {
         }
         return byState;
     }
+
+    private User getUser(long id, String operation) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("User with id %s not found when trying to %s",
+                                id, operation)));
+    }
+
+    private void isUserExist(long id) {
+        if (!userRepository.existsById(id)) {
+            throw new NotFoundException("There is no user in database with id: " + id);
+        }
+    }
+
 
     private void validateDate(LocalDateTime start, LocalDateTime end) {
         List<Booking> interferedBookings = bookingRepository.findAllByDateInterfering(start, end);
