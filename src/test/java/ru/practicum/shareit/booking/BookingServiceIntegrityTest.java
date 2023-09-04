@@ -20,11 +20,11 @@ import ru.practicum.shareit.user.User;
 import javax.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.time.LocalDateTime.now;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.data.domain.Sort.Direction.DESC;
 import static ru.practicum.shareit.booking.status.Status.*;
@@ -149,6 +149,13 @@ class BookingServiceIntegrityTest {
                 userWithChair.getId(), State.PAST, true, page);
         List<BookingDto> foundBookingsWaiting = service.getAllForUserByState(
                 userWithTable.getId(), State.WAITING, false, page);
+        List<BookingDto> foundBookingRejected = service.getAllForUserByState(
+                userWithTable.getId(), State.REJECTED, false, page);
+        List<BookingDto> foundBookingFuture = service.getAllForUserByState(
+                userWithTable.getId(), State.FUTURE, false, page);
+        List<BookingDto> foundBookingAll = service.getAllForUserByState(
+                userWithTable.getId(), State.ALL, false, page);
+
 
         assertThat(foundBookingsPast, hasSize(2));
         assertThat(foundBookingsPast.get(0).getId(), equalTo(bookingForTablePast.getId()));
@@ -163,6 +170,17 @@ class BookingServiceIntegrityTest {
         assertThat(foundBookingsWaiting, hasSize(1));
         assertThat(foundBookingsWaiting.get(0).getId(), equalTo(bookingForTableFuture.getId()));
         assertThat(foundBookingsWaiting.get(0).getStatus(), equalTo(bookingForTableFuture.getStatus()));
+        assertThat(foundBookingRejected, hasSize(1));
+        assertThat(foundBookingRejected.get(0).getId(), equalTo(bookingForTablePastRejected.getId()));
+        assertThat(foundBookingFuture, hasSize(1));
+        assertThat(foundBookingFuture.get(0).getId(), equalTo(bookingForTableFuture.getId()));
+        assertThat(foundBookingAll, hasSize(3));
+        assertThat(foundBookingAll.stream()
+                        .map(BookingDto::getId)
+                        .collect(Collectors.toList()),
+                containsInAnyOrder(bookingForTableFuture.getId(),
+                        bookingForTablePast.getId(),
+                        bookingForTablePastRejected.getId()));
     }
 
     private User getUser(int userId) {
