@@ -85,6 +85,7 @@ class ItemServiceIntegriryTest {
                 .getResultList();
         assertThat(allItems, hasSize(1));
         assertThat(allItems.get(0), equalTo(expectedItem));
+        assertThat(allItems.get(0).hashCode(), equalTo(expectedItem.hashCode()));
         assertThat(allItems.get(0).getId(), equalTo(1L));
         assertThat(allItems.get(0).getName(), equalTo(receivedItemDto.getName()));
         assertThat(allItems.get(0).getDescription(), equalTo(receivedItemDto.getDescription()));

@@ -129,7 +129,7 @@ public class BookingControllerTest {
         BookingRequest bookingRequest = BookingRequest.builder()
                 .itemId(1L)
                 .start(LocalDateTime.now().plusMinutes(1))
-                .end(LocalDateTime.now().minusDays(1))
+                .end(LocalDateTime.now().plusDays(1))
                 .build();
 
         mockMvc.perform(post("/bookings")
@@ -139,7 +139,8 @@ public class BookingControllerTest {
                 .andExpect(jsonPath("$.length()", is(1)))
                 .andExpect(jsonPath("$.['Bad Request'].length()", is(1)))
                 .andExpect(jsonPath("$.['Bad Request']")
-                        .value("End date should be after start date"));
+                        .value("Required request header 'X-Sharer-User-Id' " +
+                                "for method parameter type long is not present"));
     }
 
     @Test

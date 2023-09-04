@@ -8,6 +8,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -27,8 +28,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(controllers = UserController.class)
-//@SpringBootTest
-//@AutoConfigureMockMvc
 class UserControllerTest {
 
     @Autowired
@@ -89,6 +88,22 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.length()", is(1)))
                 .andExpect(jsonPath("$.['Bad Request']")
                         .value("Email должен быть корректным адресом электронной почты"));
+    }
+
+    @Test
+    public void testCreateUser_EmailOccupied() throws Exception {
+        when(userService.create(any()))
+                .thenThrow(new DataIntegrityViolationException("",
+                        new RuntimeException(
+                                new RuntimeException("This email already occupied"))));
+
+        mvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\": \"John\", \"email\": \"john@example.com\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.length()", is(1)))
+                .andExpect(jsonPath("$.['Conflict']")
+                        .value("This email already occupied"));
     }
 
     @Test
