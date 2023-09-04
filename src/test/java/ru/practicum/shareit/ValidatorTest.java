@@ -7,6 +7,7 @@ import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -16,12 +17,13 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ValidatorTest {
-
     private final Validator validator;
 
     public ValidatorTest() {
+        Locale locale = Locale.forLanguageTag("ru-RU");
+        Locale.setDefault(locale);
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-        this.validator = factory.getValidator();
+        this.validator = factory.usingContext().getValidator();
     }
 
     @Test
