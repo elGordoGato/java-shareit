@@ -160,10 +160,10 @@ class ItemServiceIntegriryTest {
         CommentDto createdComment = service.create(receivedDto, 1L, 1L);
 
         assertThat(createdComment, notNullValue());
-        assertThat(createdComment, hasProperty("id", equalTo(1L)));
-        assertThat(createdComment, hasProperty("text", equalTo("Comment Test")));
-        assertThat(createdComment, hasProperty("created", notNullValue()));
-        assertThat(createdComment, hasProperty("authorName", equalTo("John")));
+        assertThat(createdComment.getId(), equalTo(1L));
+        assertThat(createdComment.getText(), equalTo("Comment Test"));
+        assertThat(createdComment.getCreated(), notNullValue());
+        assertThat(createdComment.getAuthorName(), equalTo("John"));
     }
 
     private User getUser(int userId) {

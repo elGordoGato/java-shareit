@@ -133,10 +133,10 @@ public class BookingServiceImpl implements BookingService {
     }
 
 
-    private void validateDate(LocalDateTime start, LocalDateTime end) {
+/*    private void validateDate(LocalDateTime start, LocalDateTime end) {
         List<Booking> interferedBookings = bookingRepository.findAllByDateInterfering(start, end);
         if (!interferedBookings.isEmpty()) {
             throw new ConflictException("Required dates already booked by " + interferedBookings);
         }
-    }
+    }*/
 }
