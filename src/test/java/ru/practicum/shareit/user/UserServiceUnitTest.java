@@ -1,22 +1,26 @@
 package ru.practicum.shareit.user;
-import org.junit.jupiter.api.BeforeEach;
+
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import ru.practicum.shareit.exception.NotFoundException;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class UserServiceImplTest {
+@ExtendWith(MockitoExtension.class)
+public class UserServiceUnitTest {
 
     @Mock
     private UserRepository repository;
@@ -24,10 +28,6 @@ public class UserServiceImplTest {
     @InjectMocks
     private UserServiceImpl userService;
 
-    @BeforeEach
-    public void setup() {
-        MockitoAnnotations.initMocks(this);
-    }
 
     @Test
     public void testGetAll() {
@@ -40,9 +40,11 @@ public class UserServiceImplTest {
         List<UserDto> result = userService.getAll();
 
         // Verify the result
-        assertEquals(2, result.size());
-        assertEquals("John", result.get(0).getName());
-        assertEquals("jane@example.com", result.get(1).getEmail());
+        verify(repository, Mockito.times(1))
+                .findAll();
+        assertThat(2, equalTo(result.size()));
+        assertThat("John", equalTo(result.get(0).getName()));
+        assertThat("jane@example.com", equalTo(result.get(1).getEmail()));
     }
 
     @Test
@@ -55,8 +57,10 @@ public class UserServiceImplTest {
         UserDto result = userService.getById(1L);
 
         // Verify the result
-        assertEquals("John", result.getName());
-        assertEquals("john@example.com", result.getEmail());
+        verify(repository, Mockito.times(1))
+                .findById(Mockito.anyLong());
+        assertThat("John", equalTo(result.getName()));
+        assertThat("john@example.com", equalTo(result.getEmail()));
     }
 
     @Test
@@ -66,6 +70,8 @@ public class UserServiceImplTest {
 
         // Verify that NotFoundException is thrown
         assertThrows(NotFoundException.class, () -> userService.getById(1L));
+        verify(repository, Mockito.times(1))
+                .findById(Mockito.anyLong());
     }
 
     @Test
@@ -79,9 +85,11 @@ public class UserServiceImplTest {
         UserDto result = userService.create(userDto);
 
         // Verify the result
-        assertEquals(1L, result.getId());
-        assertEquals("John", result.getName());
-        assertEquals("john@example.com", result.getEmail());
+        verify(repository, Mockito.times(1))
+                .save(Mockito.any());
+        assertThat(1L, equalTo(result.getId()));
+        assertThat("John", equalTo(result.getName()));
+        assertThat("john@example.com", equalTo(result.getEmail()));
     }
 
     @Test
@@ -113,6 +121,7 @@ public class UserServiceImplTest {
         assertThrows(NotFoundException.class, () -> userService.update(1L, newData));
     }
 
+
     @Test
     public void testDeleteById_ExistingUser() {
         // Mock the repository response
@@ -122,6 +131,8 @@ public class UserServiceImplTest {
         userService.deleteById(1L);
 
         // Verify that deleteById method is called with correct argument
+        verify(repository, Mockito.times(1))
+                .deleteById(Mockito.anyLong());
         verify(repository).deleteById(1L);
     }
 
@@ -132,5 +143,7 @@ public class UserServiceImplTest {
 
         // Verify that NotFoundException is thrown
         assertThrows(NotFoundException.class, () -> userService.deleteById(1L));
+        verify(repository, Mockito.times(0))
+                .deleteById(Mockito.anyLong());
     }
 }

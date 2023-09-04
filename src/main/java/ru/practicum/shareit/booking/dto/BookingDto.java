@@ -1,5 +1,6 @@
 package ru.practicum.shareit.booking.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
 import ru.practicum.shareit.booking.status.Status;
@@ -24,5 +25,6 @@ public class BookingDto {
 
     private final ItemShort item;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Status status;
 }

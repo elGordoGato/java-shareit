@@ -13,7 +13,7 @@ public interface ItemService {
 
     ItemDto getById(long itemId, long userId);
 
-    List<ItemDto> getAllForUser(long userId);
+    List<ItemDto> getAllForUser(long userId, Pageable page);
 
     List<ItemDto> searchByNameAndDescr(String text, long userId, Pageable page);
 

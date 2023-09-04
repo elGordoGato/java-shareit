@@ -35,11 +35,11 @@ public class Booking {
     @Enumerated(EnumType.STRING)
     private Status status = Status.WAITING;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @ToString.Exclude
     private User booker;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @ToString.Exclude
     private Item item;
 }

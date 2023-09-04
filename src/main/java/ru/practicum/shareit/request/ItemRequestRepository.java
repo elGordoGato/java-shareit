@@ -9,9 +9,5 @@ public interface ItemRequestRepository extends JpaRepository<ItemRequest, Long> 
 
     List<ItemRequest> findAllByAuthorId(Long id);
 
-    List<ItemRequest> findAllByIdNotIn(List<Long> id, Pageable pageRequest);
-
-    List<ItemRequest> findByIdNotIn(List<Long> requestsOfUserItems, Pageable pageRequest);
-
     List<ItemRequest> findAllByAuthorIdNot(Long id, Pageable pageRequest);
 }

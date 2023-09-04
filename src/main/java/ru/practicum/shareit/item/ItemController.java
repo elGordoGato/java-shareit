@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
@@ -24,6 +25,7 @@ import static org.springframework.data.domain.Sort.Direction.DESC;
 @RestController
 @RequestMapping("/items")
 @RequiredArgsConstructor
+@Validated
 public class ItemController {
     private final ItemService itemService;
 
@@ -52,9 +54,13 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDto> getAllForUser(@RequestHeader("X-Sharer-User-Id") long userId) {
+    public List<ItemDto> getAllForUser(@RequestHeader("X-Sharer-User-Id") long userId,
+                                       @RequestParam(defaultValue = "0") @PositiveOrZero int from,
+                                       @RequestParam(defaultValue = "10") @Positive int size) {
+        Sort sort = Sort.by(DESC, "created");
+        Pageable page = PageRequest.of(from / size, size, sort);
         log.info("Received request from user {} to get all items", userId);
-        return itemService.getAllForUser(userId);
+        return itemService.getAllForUser(userId, page);
     }
 
     @GetMapping("/search")
@@ -62,7 +68,7 @@ public class ItemController {
                                               @RequestHeader("X-Sharer-User-Id") long userId,
                                               @RequestParam(defaultValue = "0") @PositiveOrZero int from,
                                               @RequestParam(defaultValue = "10") @Positive int size) {
-        Sort sort = Sort.by(DESC, "id");
+        Sort sort = Sort.by(DESC, "created");
         Pageable page = PageRequest.of(from / size, size, sort);
         log.info("Received request from user {} to search items containing: {}", userId, text);
         return itemService.searchByNameAndDescr(text, userId, page);

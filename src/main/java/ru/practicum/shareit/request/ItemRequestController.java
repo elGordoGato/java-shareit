@@ -35,7 +35,7 @@ public class ItemRequestController {
     public List<ItemRequestDto> getOwn(@RequestHeader("X-Sharer-User-Id") long userId) {
         log.info("Received request to get all own requests from user: {}",
                 userId);
-        return requestService.findByUserId(userId);
+        return requestService.findAllByUserId(userId);
     }
 
 

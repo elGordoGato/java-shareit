@@ -42,7 +42,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     }
 
     @Override
-    public List<ItemRequestDto> findByUserId(long userId) {
+    public List<ItemRequestDto> findAllByUserId(long userId) {
         User requestingUser = getUser(userId, "get all own requests");
         Map<Long, ItemRequest> itemRequests = requestsToMap(
                 requestRepository.findAllByAuthorId(

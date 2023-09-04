@@ -75,6 +75,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto getById(long itemId, long userId) {
+        getUser(userId, "get item with id: " + itemId);
         Item targetItem = getItem(itemId, "get it");
         log.info("Item found: {}", targetItem);
         BookingsByItem dateByItem = targetItem.getOwner().getId()
@@ -87,11 +88,11 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDto> getAllForUser(long userId) {
+    public List<ItemDto> getAllForUser(long userId, Pageable page) {
         User user = getUser(userId, "get own items");
         Map<Long, Item> itemMap = itemListToMap(
                 itemRepository.findAllByOwnerId(
-                        user.getId()));
+                        user.getId(), page));
         log.info("Found {} items of user with id: {}", itemMap.size(), userId);
         Map<Long, BookingsByItem> bookingMap = getBookingsMap(itemMap);
         Map<Long, List<Comment>> commentMap = getCommentMap(itemMap);
