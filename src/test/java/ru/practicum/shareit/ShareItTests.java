@@ -14,5 +14,6 @@ class ShareItTests {
     }
 
     @Test
-    void contextLoads() {}
+    void contextLoads() {
+    }
 }
