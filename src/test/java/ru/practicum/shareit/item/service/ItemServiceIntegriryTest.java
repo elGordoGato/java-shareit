@@ -77,13 +77,14 @@ class ItemServiceIntegriryTest {
                 .available(false)
                 .build();
         ItemRequest request = addRequest(1, anothetUser);
-        addItem(1, owner, request);
+        Item expectedItem = addItem(1, owner, request);
 
         ItemDto updatedItem = service.update(1L, owner.getId(), receivedItemDto);
 
         List<Item> allItems = em.createQuery("SELECT i FROM Item i ", Item.class)
                 .getResultList();
         assertThat(allItems, hasSize(1));
+        assertThat(allItems.get(0), equalTo(expectedItem));
         assertThat(allItems.get(0).getId(), equalTo(1L));
         assertThat(allItems.get(0).getName(), equalTo(receivedItemDto.getName()));
         assertThat(allItems.get(0).getDescription(), equalTo(receivedItemDto.getDescription()));
