@@ -15,7 +15,7 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.storage.ItemRepository;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.user.User;
-import ru.practicum.shareit.user.UserRepository;
+import ru.practicum.shareit.user.UserService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ import static org.mockito.Mockito.*;
 class ItemRequestServiceUnitTest {
 
     @Mock
-    private UserRepository userRepository;
+    private UserService userService;
 
     @Mock
     private ItemRepository itemRepository;
@@ -58,8 +58,8 @@ class ItemRequestServiceUnitTest {
                 .build();
         User user = getUser(1);
 
-        when(userRepository.findById(user.getId()))
-                .thenReturn(Optional.of(user));
+        when(userService.findById(user.getId()))
+                .thenReturn(user);
         when(requestRepository.save(ArgumentMatchers.any(ItemRequest.class)))
                 .thenReturn(new ItemRequest(1L, requestDto.getDescription(), user));
 
@@ -71,7 +71,7 @@ class ItemRequestServiceUnitTest {
         assertThat(resultDto.getId(), equalTo(1L));
         assertThat(resultDto.getDescription(), equalTo(requestDto.getDescription()));
         assertThat(resultDto.getCreated(), instanceOf(LocalDateTime.class));
-        verify(userRepository, times(1)).findById(anyLong());
+        verify(userService, times(1)).findById(anyLong());
         verify(requestRepository, times(1))
                 .save(ArgumentMatchers.any(ItemRequest.class));
     }
@@ -82,14 +82,14 @@ class ItemRequestServiceUnitTest {
         long userId = 1L;
         ItemRequestDto requestDto = ItemRequestDto.builder()
                 .description("request example").build();
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.empty());
+        when(userService.findById(userId))
+                .thenThrow(new NotFoundException(""));
 
         // Act & Assert
         assertThrows(NotFoundException.class, () -> {
             itemRequestService.create(userId, requestDto);
         });
-        verify(userRepository, times(1)).findById(anyLong());
+        verify(userService, times(1)).findById(anyLong());
         verify(requestRepository, times(0))
                 .save(ArgumentMatchers.any(ItemRequest.class));
     }
@@ -101,8 +101,8 @@ class ItemRequestServiceUnitTest {
         User user = getUser(1);
         ItemRequest itemRequest = getItemRequest(1, user);
         List<ItemRequest> requestList = List.of(itemRequest);
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(user));
+        when(userService.findById(userId))
+                .thenReturn(user);
         when(requestRepository.findAllByAuthorId(anyLong()))
                 .thenReturn(requestList);
         when(itemRepository.findAllByRequestIdIn(any()))
@@ -110,7 +110,7 @@ class ItemRequestServiceUnitTest {
                         1L, "item", "descr", true, user, itemRequest)));
 
         // Act
-        List<ItemRequestDto> result = itemRequestService.findAllByUserId(1L);
+        List<ItemRequestDto> result = itemRequestService.getAllByUserId(1L);
 
         // Assert
         Assertions.assertNotNull(result);
@@ -120,7 +120,7 @@ class ItemRequestServiceUnitTest {
         assertThat(result.get(0), hasProperty("created", instanceOf(LocalDateTime.class)));
         assertThat(result.get(0), hasProperty("items", hasSize(1)));
         assertThat(result.get(0).getItems().get(0), hasProperty("name", equalTo("item")));
-        verify(userRepository, times(1)).findById(anyLong());
+        verify(userService, times(1)).findById(anyLong());
         verify(requestRepository, times(1)).findAllByAuthorId(anyLong());
         verify(itemRepository, times(1)).findAllByRequestIdIn(any());
     }
@@ -129,17 +129,18 @@ class ItemRequestServiceUnitTest {
     void findByUserId_InvalidUserId_ThrowsNotFoundException() {
         // Arrange
         long userId = 1L;
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.empty());
+        when(userService.findById(userId))
+                .thenThrow(new NotFoundException("User with id: " + userId +
+                        " requesting to get all own requests was not found"));
 
         // Act & Assert
         Exception exception = assertThrows(NotFoundException.class, () -> {
-            itemRequestService.findAllByUserId(userId);
+            itemRequestService.getAllByUserId(userId);
         });
         assertThat(exception.getMessage(),
                 equalTo("User with id: " + userId +
                         " requesting to get all own requests was not found"));
-        verify(userRepository, times(1)).findById(anyLong());
+        verify(userService, times(1)).findById(anyLong());
         verify(requestRepository, times(0)).findAllByAuthorId(anyLong());
         verify(itemRepository, times(0)).findAllByRequestIdIn(any());
 
@@ -153,8 +154,8 @@ class ItemRequestServiceUnitTest {
 
         User requestingUser = getUser(1);
         User requestAuthor = getUser(2);
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(requestingUser));
+        when(userService.findById(userId))
+                .thenReturn(requestingUser);
 
         ItemRequest itemRequest1 = getItemRequest(1, requestAuthor);
         ItemRequest itemRequest2 = getItemRequest(2, requestAuthor);
@@ -172,10 +173,10 @@ class ItemRequestServiceUnitTest {
         expectedDtos.add(dto1);
         expectedDtos.add(dto2);
 
-        List<ItemRequestDto> result = itemRequestService.findAll(userId, pageRequest);
+        List<ItemRequestDto> result = itemRequestService.getAll(userId, pageRequest);
 
         assertThat(result, equalTo(expectedDtos));
-        verify(userRepository, times(1)).findById(anyLong());
+        verify(userService, times(1)).findById(anyLong());
         verify(requestRepository, times(1)).findAllByAuthorIdNot(anyLong(), any());
         verify(itemRepository, times(1)).findAllByRequestIdIn(any());
     }
@@ -184,11 +185,11 @@ class ItemRequestServiceUnitTest {
     public void testFindAll_WithInvalidUserId_ShouldThrowException() {
         long userId = 1L;
         Pageable pageRequest = mock(Pageable.class);
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.empty());
+        when(userService.findById(userId))
+                .thenThrow(new NotFoundException(""));
 
-        assertThrows(NotFoundException.class, () -> itemRequestService.findAll(userId, pageRequest));
-        verify(userRepository, times(1)).findById(anyLong());
+        assertThrows(NotFoundException.class, () -> itemRequestService.getAll(userId, pageRequest));
+        verify(userService, times(1)).findById(anyLong());
         verify(requestRepository, times(0)).findAllByAuthorIdNot(anyLong(), any());
         verify(itemRepository, times(0)).findAllByRequestIdIn(any());
     }
@@ -206,21 +207,19 @@ class ItemRequestServiceUnitTest {
         Item item2 = getItem(2, getUser(2), itemRequest);
 
         // Mock the repository methods
-        Mockito.when(userRepository.findById(Mockito.anyLong()))
-                .thenReturn(Optional.of(user));
         Mockito.when(requestRepository.findById(Mockito.anyLong()))
                 .thenReturn(Optional.of(itemRequest));
         Mockito.when(itemRepository.findAllByRequestIdIn(Mockito.anySet()))
                 .thenReturn(List.of(item1, item2));
 
         // Call the method
-        ItemRequestDto result = itemRequestService.findById(1L, 1L);
+        ItemRequestDto result = itemRequestService.getById(1L, 1L);
         ItemRequestDto expectedDto = getItemRequestDto(itemRequest, List.of(item1, item2));
 
         // Assert the result
         assertThat(result, notNullValue());
         assertThat(result, equalTo(expectedDto));
-        verify(userRepository, times(1)).findById(anyLong());
+        verify(userService, times(1)).existsById(anyLong());
         verify(requestRepository, times(1)).findById(anyLong());
         verify(itemRepository, times(1)).findAllByRequestIdIn(any());
     }
@@ -230,14 +229,15 @@ class ItemRequestServiceUnitTest {
         long userId = 1L;
         long requestId = 1L;
         // Mock the repository methods
-        Mockito.when(userRepository.findById(Mockito.anyLong()))
-                .thenReturn(Optional.empty());
+        doThrow(new NotFoundException(String.format(
+                "User with id: %s requesting to get request with id: %s was not found", userId, requestId)))
+                .when(userService).existsById(userId);
 
         // Call the method
 
         Exception exception = assertThrows(NotFoundException.class,
-                () -> itemRequestService.findById(userId, requestId));
-        verify(userRepository, times(1)).findById(anyLong());
+                () -> itemRequestService.getById(userId, requestId));
+        verify(userService, times(1)).existsById(anyLong());
         verify(requestRepository, times(0)).findById(anyLong());
         verify(itemRepository, times(0)).findAllByRequestIdIn(any());
         assertThat(exception.getMessage(), equalTo(String.format(
@@ -250,16 +250,14 @@ class ItemRequestServiceUnitTest {
         long requestId = 1L;
         User user = getUser(1);
         // Mock the repository methods
-        Mockito.when(userRepository.findById(Mockito.anyLong()))
-                .thenReturn(Optional.of(user));
         Mockito.when(requestRepository.findById(Mockito.anyLong()))
                 .thenReturn(Optional.empty());
 
         // Call the method
 
         Exception exception = assertThrows(NotFoundException.class,
-                () -> itemRequestService.findById(user.getId(), requestId));
-        verify(userRepository, times(1)).findById(anyLong());
+                () -> itemRequestService.getById(user.getId(), requestId));
+        verify(userService, times(1)).existsById(anyLong());
         verify(requestRepository, times(1)).findById(anyLong());
         verify(itemRepository, times(0)).findAllByRequestIdIn(any());
         assertThat(exception.getMessage(), equalTo(

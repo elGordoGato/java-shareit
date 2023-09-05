@@ -8,9 +8,9 @@ import java.util.List;
 public interface ItemRequestService {
     ItemRequestDto create(long userId, ItemRequestDto requestDto);
 
-    List<ItemRequestDto> findAllByUserId(long userId);
+    List<ItemRequestDto> getAllByUserId(long userId);
 
-    List<ItemRequestDto> findAll(long userId, Pageable pageRequest);
+    List<ItemRequestDto> getAll(long userId, Pageable pageRequest);
 
-    ItemRequestDto findById(long userId, long requestId);
+    ItemRequestDto getById(long userId, long requestId);
 }

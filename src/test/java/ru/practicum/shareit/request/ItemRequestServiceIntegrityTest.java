@@ -62,7 +62,7 @@ class ItemRequestServiceIntegrityTest {
     void findAllByUserId() {
         setupTwoUsersWithItemsAndRequests();
 
-        List<ItemRequestDto> foundRequests = service.findAllByUserId(1L);
+        List<ItemRequestDto> foundRequests = service.getAllByUserId(1L);
         assertThat(foundRequests, hasSize(1));
         assertThat(foundRequests.get(0).getId(), equalTo(1L));
         assertThat(foundRequests.get(0).getDescription(), equalTo("Request for table"));
@@ -76,7 +76,7 @@ class ItemRequestServiceIntegrityTest {
     void findAll() {
         setupTwoUsersWithItemsAndRequests();
 
-        List<ItemRequestDto> foundRequests = service.findAll(1L, Pageable.unpaged());
+        List<ItemRequestDto> foundRequests = service.getAll(1L, Pageable.unpaged());
         assertThat(foundRequests, hasSize(1));
         assertThat(foundRequests.get(0).getId(), equalTo(2L));
         assertThat(foundRequests.get(0).getDescription(), equalTo("Request for chair"));
@@ -90,7 +90,7 @@ class ItemRequestServiceIntegrityTest {
     void findById() {
         setupTwoUsersWithItemsAndRequests();
 
-        ItemRequestDto foundRequest = service.findById(1L, 2L);
+        ItemRequestDto foundRequest = service.getById(1L, 2L);
 
         assertThat(foundRequest, notNullValue());
         assertThat(foundRequest.getId(), equalTo(2L));

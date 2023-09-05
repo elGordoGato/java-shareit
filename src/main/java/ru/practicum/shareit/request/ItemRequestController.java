@@ -35,7 +35,7 @@ public class ItemRequestController {
     public List<ItemRequestDto> getOwn(@RequestHeader("X-Sharer-User-Id") long userId) {
         log.info("Received request to get all own requests from user: {}",
                 userId);
-        return requestService.findAllByUserId(userId);
+        return requestService.getAllByUserId(userId);
     }
 
 
@@ -48,7 +48,7 @@ public class ItemRequestController {
                 userId,
                 from,
                 size);
-        return requestService.findAll(userId, page);
+        return requestService.getAll(userId, page);
     }
 
 
@@ -57,7 +57,7 @@ public class ItemRequestController {
                                   @PathVariable long requestId) {
         log.info("Received request to get request: {} from user: {}",
                 requestId, userId);
-        return requestService.findById(userId, requestId);
+        return requestService.getById(userId, requestId);
     }
 
 }

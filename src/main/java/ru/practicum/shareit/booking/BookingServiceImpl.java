@@ -15,7 +15,7 @@ import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.storage.ItemRepository;
 import ru.practicum.shareit.user.User;
-import ru.practicum.shareit.user.UserRepository;
+import ru.practicum.shareit.user.UserService;
 
 import java.util.List;
 
@@ -29,14 +29,14 @@ import static ru.practicum.shareit.booking.status.Status.*;
 @Transactional(readOnly = true)
 public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final ItemRepository itemRepository;
 
 
     @Override
     @Transactional
     public BookingDto create(BookingRequest bookingRequest, long bookerId) {
-        User booker = getUser(bookerId, "book item " + bookingRequest.getItemId());
+        User booker = userService.findById(bookerId);
         Item item = itemRepository.findByIdIsAndOwnerIdNot(bookingRequest.getItemId(), bookerId)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Item with id %s not found when trying to book it by user %s",
@@ -44,8 +44,6 @@ public class BookingServiceImpl implements BookingService {
         if (!item.getAvailable()) {
             throw new BadRequestException("Item is not available");
         }
-        // Tests do not support these feature - not passing when enabled:
-        //validateDate(bookingRequest.getStart(), bookingRequest.getEnd());
         Booking booking = bookingRepository.save(requestToBooking(bookingRequest, booker, item));
         log.info("Booking successfully created: {}", booking);
         return bookingToDto(booking);
@@ -71,7 +69,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingDto getById(long bookingId, long userId) {
-        isUserExist(userId);
+        userService.existsById(userId);
         Booking booking = bookingRepository.findByIdAndByBookerOrOwner(bookingId, userId)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Booking with id %s not found when trying to get it by user %s",
@@ -81,7 +79,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingDto> getAllForUserByState(long userId, State state, boolean isBooker, Pageable page) {
-        isUserExist(userId);
+        userService.existsById(userId);
         BooleanExpression byUserId = isBooker ? QBooking.booking.booker.id.eq(userId) :
                 QBooking.booking.item.owner.id.eq(userId);
         BooleanExpression byState = getConditionByState(state);
@@ -116,25 +114,4 @@ public class BookingServiceImpl implements BookingService {
         }
         return byState;
     }
-
-    private User getUser(long id, String operation) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("User with id %s not found when trying to %s",
-                                id, operation)));
-    }
-
-    private void isUserExist(long id) {
-        if (!userRepository.existsById(id)) {
-            throw new NotFoundException("There is no user in database with id: " + id);
-        }
-    }
-
-
-/*    private void validateDate(LocalDateTime start, LocalDateTime end) {
-        List<Booking> interferedBookings = bookingRepository.findAllByDateInterfering(start, end);
-        if (!interferedBookings.isEmpty()) {
-            throw new ConflictException("Required dates already booked by " + interferedBookings);
-        }
-    }*/
 }

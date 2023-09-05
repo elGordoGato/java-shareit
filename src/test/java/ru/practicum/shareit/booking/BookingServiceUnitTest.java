@@ -18,7 +18,7 @@ import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.storage.ItemRepository;
 import ru.practicum.shareit.user.User;
-import ru.practicum.shareit.user.UserRepository;
+import ru.practicum.shareit.user.UserService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,7 +37,7 @@ class BookingServiceUnitTest {
     private BookingRepository bookingRepository;
 
     @Mock
-    private UserRepository userRepository;
+    private UserService userService;
 
     @Mock
     private ItemRepository itemRepository;
@@ -63,8 +63,8 @@ class BookingServiceUnitTest {
                 .itemId(1L)
                 .build();
 
-        when(userRepository.findById(anyLong()))
-                .thenReturn(Optional.of(booker));
+        when(userService.findById(anyLong()))
+                .thenReturn(booker);
         when(itemRepository.findByIdIsAndOwnerIdNot(anyLong(), anyLong()))
                 .thenReturn(Optional.of(item));
         when(bookingRepository.save(any(Booking.class)))
@@ -82,7 +82,7 @@ class BookingServiceUnitTest {
         assertEquals(booking.getEnd(), result.getEnd());
         assertEquals(WAITING, result.getStatus());
 
-        verify(userRepository, times(1))
+        verify(userService, times(1))
                 .findById(booker.getId());
         verify(itemRepository, times(1))
                 .findByIdIsAndOwnerIdNot(item.getId(), booker.getId());
@@ -100,7 +100,8 @@ class BookingServiceUnitTest {
                 .build();
         long bookerId = 1L;
 
-        when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
+        when(userService.findById(anyLong())).thenThrow(new NotFoundException(
+                "User with id 1 not found when trying to book item 1"));
 
         // when
         NotFoundException exception = assertThrows(NotFoundException.class,
@@ -110,7 +111,7 @@ class BookingServiceUnitTest {
         assertEquals("User with id 1 not found when trying to book item 1",
                 exception.getMessage());
 
-        verify(userRepository).findById(bookerId);
+        verify(userService).findById(bookerId);
         verifyNoInteractions(itemRepository);
         verifyNoInteractions(bookingRepository);
     }
@@ -125,8 +126,8 @@ class BookingServiceUnitTest {
                 .build();
         User booker = new User(1L, "booker", "booker@gmail.com");
 
-        when(userRepository.findById(anyLong()))
-                .thenReturn(Optional.of(booker));
+        when(userService.findById(anyLong()))
+                .thenReturn(booker);
         when(itemRepository.findByIdIsAndOwnerIdNot(anyLong(), anyLong()))
                 .thenReturn(Optional.empty());
 
@@ -138,7 +139,7 @@ class BookingServiceUnitTest {
         assertEquals("Item with id 1 not found when trying to book it by user 1",
                 exception.getMessage());
 
-        verify(userRepository).findById(booker.getId());
+        verify(userService).findById(booker.getId());
         verify(itemRepository).findByIdIsAndOwnerIdNot(bookingRequest.getItemId(), booker.getId());
         verifyNoInteractions(bookingRepository);
     }
@@ -159,8 +160,8 @@ class BookingServiceUnitTest {
                 new User(2L, "owner", "owner@gmail.com"),
                 null);
 
-        when(userRepository.findById(anyLong()))
-                .thenReturn(Optional.of(booker));
+        when(userService.findById(anyLong()))
+                .thenReturn(booker);
         when(itemRepository.findByIdIsAndOwnerIdNot(anyLong(), anyLong()))
                 .thenReturn(Optional.of(item));
 
@@ -171,7 +172,7 @@ class BookingServiceUnitTest {
 // then
         assertEquals("Item is not available", exception.getMessage());
 
-        verify(userRepository).findById(booker.getId());
+        verify(userService).findById(booker.getId());
         verify(itemRepository).findByIdIsAndOwnerIdNot(bookingRequest.getItemId(), booker.getId());
         verifyNoInteractions(bookingRepository);
     }
@@ -248,7 +249,7 @@ class BookingServiceUnitTest {
                 exception.getMessage());
 
         verify(bookingRepository).findByIdAndBookerIdNot(bookingId, userId);
-        verifyNoInteractions(userRepository);
+        verifyNoInteractions(userService);
         verifyNoInteractions(itemRepository);
     }
 
@@ -274,7 +275,7 @@ class BookingServiceUnitTest {
         assertEquals("Booking is already Подтверждено", exception.getMessage());
 
         verify(bookingRepository).findByIdAndBookerIdNot(bookingId, userId);
-        verifyNoInteractions(userRepository);
+        verifyNoInteractions(userService);
         verifyNoInteractions(itemRepository);
     }
 
@@ -300,7 +301,7 @@ class BookingServiceUnitTest {
                 exception.getMessage());
 
         verify(bookingRepository).findByIdAndBookerIdNot(bookingId, userId);
-        verifyNoInteractions(userRepository);
+        verifyNoInteractions(userService);
         verifyNoInteractions(itemRepository);
     }
 
@@ -314,7 +315,6 @@ class BookingServiceUnitTest {
         Item item = new Item(1L, "item", "description", true, owner, null);
         Booking booking = getBooking(booker, item);
 
-        when(userRepository.existsById(anyLong())).thenReturn(true);
         when(bookingRepository.findByIdAndByBookerOrOwner(anyLong(), anyLong()))
                 .thenReturn(Optional.of(booking));
 
@@ -330,7 +330,7 @@ class BookingServiceUnitTest {
         assertEquals(booking.getEnd(), result.getEnd());
         assertEquals(WAITING, result.getStatus());
 
-        verify(userRepository).existsById(userId);
+        verify(userService).existsById(userId);
         verify(bookingRepository).findByIdAndByBookerOrOwner(bookingId, userId);
     }
 
@@ -340,7 +340,6 @@ class BookingServiceUnitTest {
         long bookingId = 1L;
         long userId = 1L;
 
-        when(userRepository.existsById(anyLong())).thenReturn(true);
         when(bookingRepository.findByIdAndByBookerOrOwner(anyLong(), anyLong()))
                 .thenReturn(Optional.empty());
 
@@ -352,7 +351,7 @@ class BookingServiceUnitTest {
         assertEquals("Booking with id 1 not found when trying to get it by user 1",
                 exception.getMessage());
 
-        verify(userRepository).existsById(userId);
+        verify(userService).existsById(userId);
         verify(bookingRepository).findByIdAndByBookerOrOwner(bookingId, userId);
     }
 
@@ -362,7 +361,8 @@ class BookingServiceUnitTest {
         long bookingId = 1L;
         long userId = 1L;
 
-        when(userRepository.existsById(anyLong())).thenReturn(false);
+        doThrow(new NotFoundException("There is no user in database with id: 1"))
+                .when(userService).existsById(userId);
 
 // when
         NotFoundException exception = assertThrows(NotFoundException.class,
@@ -371,7 +371,7 @@ class BookingServiceUnitTest {
 // then
         assertEquals("There is no user in database with id: 1", exception.getMessage());
 
-        verify(userRepository).existsById(userId);
+        verify(userService).existsById(userId);
         verifyNoInteractions(bookingRepository);
     }
 
@@ -390,8 +390,6 @@ class BookingServiceUnitTest {
         Page<Booking> bookings = new PageImpl<>(List.of(booking1, booking2));
         List<BookingDto> expected = BookingMapper.convertToDtoList(bookings);
 
-        // Stub the methods of the mocked dependencies
-        when(userRepository.existsById(userId)).thenReturn(true); // Assume the user exists
         when(bookingRepository.findAll(any(BooleanExpression.class), eq(page)))
                 .thenReturn(bookings); // Return the dummy bookings
 
@@ -411,8 +409,8 @@ class BookingServiceUnitTest {
         Pageable page = Pageable.unpaged();
 
         // Stub the method of the mocked dependency
-        when(userRepository.existsById(userId))
-                .thenReturn(false); // Assume the user does not exist
+        doThrow(new NotFoundException("There is no user in database with id: 1"))
+                .when(userService).existsById(userId); // Assume the user does not exist
 
         // Act and Assert
         assertThrows(NotFoundException.class, () -> {

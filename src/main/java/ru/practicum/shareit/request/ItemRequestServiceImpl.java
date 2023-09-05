@@ -10,7 +10,7 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.storage.ItemRepository;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.user.User;
-import ru.practicum.shareit.user.UserRepository;
+import ru.practicum.shareit.user.UserService;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,14 +27,14 @@ import static ru.practicum.shareit.request.dto.ItemRequestMapper.itemRequestToDt
 @Slf4j
 @Transactional(readOnly = true)
 public class ItemRequestServiceImpl implements ItemRequestService {
-    private final UserRepository userRepository;
     private final ItemRepository itemRepository;
     private final ItemRequestRepository requestRepository;
+    private final UserService userService;
 
     @Override
     @Transactional
     public ItemRequestDto create(long userId, ItemRequestDto requestDto) {
-        User requestingUser = getUser(userId, String.format("create request %s", requestDto));
+        User requestingUser = userService.findById(userId);
         ItemRequest itemRequest = requestRepository.save(
                 dtoToItemRequest(requestDto, requestingUser));
         log.info("Request created: {}", itemRequest);
@@ -42,8 +42,8 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     }
 
     @Override
-    public List<ItemRequestDto> findAllByUserId(long userId) {
-        User requestingUser = getUser(userId, "get all own requests");
+    public List<ItemRequestDto> getAllByUserId(long userId) {
+        User requestingUser = userService.findById(userId);
         Map<Long, ItemRequest> itemRequests = requestsToMap(
                 requestRepository.findAllByAuthorId(
                         requestingUser.getId()));
@@ -54,8 +54,8 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
 
     @Override
-    public List<ItemRequestDto> findAll(long userId, Pageable pageRequest) {
-        User requestingUser = getUser(userId, "get all others requests");
+    public List<ItemRequestDto> getAll(long userId, Pageable pageRequest) {
+        User requestingUser = userService.findById(userId);
         Map<Long, ItemRequest> itemRequests = requestsToMap(
                 requestRepository.findAllByAuthorIdNot(
                         requestingUser.getId(),
@@ -67,8 +67,8 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
 
     @Override
-    public ItemRequestDto findById(long userId, long requestId) {
-        getUser(userId, "get request with id: " + requestId);
+    public ItemRequestDto getById(long userId, long requestId) {
+        userService.existsById(userId);
         ItemRequest itemRequest = requestRepository.findById(requestId).orElseThrow(() ->
                 new NotFoundException(String.format("Item request with id: %s was not found", requestId)));
         log.info("Found request: {}", itemRequest);
@@ -76,12 +76,6 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         return itemRequestToDto(itemRequest, items);
     }
 
-    private User getUser(long id, String operation) {
-        return userRepository.findById(id)
-                .orElseThrow(
-                        () -> new NotFoundException(
-                                String.format("User with id: %s requesting to %s was not found", id, operation)));
-    }
 
     private Map<Long, ItemRequest> requestsToMap(List<ItemRequest> requestList) {
         return requestList.stream()

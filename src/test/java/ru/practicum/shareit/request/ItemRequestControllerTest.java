@@ -94,7 +94,7 @@ public class ItemRequestControllerTest {
 
         List<ItemRequestDto> requestList = Collections.singletonList(requestDto);
 
-        when(requestService.findAllByUserId(anyLong()))
+        when(requestService.getAllByUserId(anyLong()))
                 .thenReturn(requestList);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/requests")
@@ -112,7 +112,7 @@ public class ItemRequestControllerTest {
 
         List<ItemRequestDto> requestList = Arrays.asList(requestDto);
 
-        when(requestService.findAll(anyLong(), any()))
+        when(requestService.getAll(anyLong(), any()))
                 .thenReturn(requestList);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/requests/all")
@@ -133,7 +133,7 @@ public class ItemRequestControllerTest {
 
         List<ItemRequestDto> requestList = Collections.singletonList(requestDto);
 
-        when(requestService.findAll(anyLong(), any()))
+        when(requestService.getAll(anyLong(), any()))
                 .thenReturn(requestList);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/requests/all")
@@ -152,7 +152,7 @@ public class ItemRequestControllerTest {
 
         List<ItemRequestDto> requestList = Collections.singletonList(requestDto);
 
-        when(requestService.findAll(anyLong(), any()))
+        when(requestService.getAll(anyLong(), any()))
                 .thenReturn(requestList);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/requests/all")
@@ -169,7 +169,7 @@ public class ItemRequestControllerTest {
     @Test
     public void testGetById() throws Exception {
 
-        when(requestService.findById(anyLong(), anyLong()))
+        when(requestService.getById(anyLong(), anyLong()))
                 .thenReturn(requestDto);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/requests/1")

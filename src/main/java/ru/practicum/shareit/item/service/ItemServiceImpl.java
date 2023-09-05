@@ -19,6 +19,7 @@ import ru.practicum.shareit.request.ItemRequest;
 import ru.practicum.shareit.request.ItemRequestRepository;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
+import ru.practicum.shareit.user.UserService;
 
 import java.util.*;
 import java.util.function.Function;
@@ -40,10 +41,11 @@ public class ItemServiceImpl implements ItemService {
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
     private final ItemRequestRepository requestRepository;
+    private final UserService userService;
 
     @Override
     public ItemDto create(ItemDto item, long userId) {
-        User creatingUser = getUser(userId, "create item: " + item);
+        User creatingUser = userService.findById(userId);
         ItemRequest request = getItemRequest(item);
         Item itemCreated = itemRepository.save(
                 dtoToItem(item, creatingUser, request));
@@ -75,7 +77,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto getById(long itemId, long userId) {
-        getUser(userId, "get item with id: " + itemId);
+        userService.existsById(userId);
         Item targetItem = getItem(itemId, "get it");
         log.info("Item found: {}", targetItem);
         BookingsByItem dateByItem = targetItem.getOwner().getId()
@@ -89,7 +91,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> getAllForUser(long userId, Pageable page) {
-        User user = getUser(userId, "get own items");
+        User user = userService.findById(userId);
         Map<Long, Item> itemMap = itemListToMap(
                 itemRepository.findAllByOwnerId(
                         user.getId(), page));
@@ -101,10 +103,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> searchByNameAndDescr(String text, long userId, Pageable page) {
-        if (!userRepository.existsById(userId)) {
-            throw new NotFoundException(
-                    String.format("User with id %s not found when trying to search for item by %s", userId, text));
-        }
+        userService.existsById(userId);
         if (text.isBlank()) {
             log.info("No text for search entered");
             return Collections.emptyList();
@@ -119,7 +118,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public CommentDto create(CommentDto comment, long itemId, long userId) {
-        User author = getUser(userId, "create comment: " + comment);
+        User author = userService.findById(userId);
         Item item = getItem(itemId, "comment it");
         isItemRentedByUser(itemId, userId);
         Comment commentCreated = commentRepository.save(
@@ -128,11 +127,6 @@ public class ItemServiceImpl implements ItemService {
         return commentToDto(commentCreated);
     }
 
-    private User getUser(long id, String operation) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("User with id %s not found when trying to %s", id, operation)));
-    }
 
     private Item getItem(long id, String operation) {
         return itemRepository.findById(id)

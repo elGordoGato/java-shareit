@@ -22,9 +22,8 @@ import ru.practicum.shareit.item.storage.CommentRepository;
 import ru.practicum.shareit.item.storage.ItemRepository;
 import ru.practicum.shareit.request.ItemRequest;
 import ru.practicum.shareit.request.ItemRequestRepository;
-import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.user.User;
-import ru.practicum.shareit.user.UserRepository;
+import ru.practicum.shareit.user.UserService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -46,7 +45,7 @@ import static ru.practicum.shareit.booking.status.Status.APPROVED;
 @ExtendWith(MockitoExtension.class)
 class ItemServiceUnitTest {
     @Mock
-    private UserRepository userRepository;
+    private UserService userService;
 
     @Mock
     private ItemRepository itemRepository;
@@ -75,8 +74,8 @@ class ItemServiceUnitTest {
         Item item = getItem(1, user, null);
 
         // Set up any necessary dependencies or mocks
-        when(userRepository.findById(anyLong()))
-                .thenReturn(Optional.of(user));
+        when(userService.findById(anyLong()))
+                .thenReturn(user);
         when(itemRepository.save(any(Item.class)))
                 .thenReturn(item);
 
@@ -93,7 +92,7 @@ class ItemServiceUnitTest {
         assertThat(itemDto.getNextBooking(), equalTo(result.getNextBooking()));
         assertThat(itemDto.getRentCounter(), equalTo(result.getRentCounter()));
         assertThat(itemDto.getRequestId(), equalTo(result.getRequestId()));
-        verify(userRepository, times(1)).findById(anyLong());
+        verify(userService, times(1)).findById(anyLong());
         verify(requestRepository, times(0)).findById(anyLong());
         verify(itemRepository, times(1)).save(any(Item.class));
         // Add more assertions as needed
@@ -109,8 +108,9 @@ class ItemServiceUnitTest {
                 .build();
 
         // Set up any necessary dependencies or mocks
-        when(userRepository.findById(anyLong()))
-                .thenReturn(Optional.empty());
+        when(userService.findById(anyLong()))
+                .thenThrow(new NotFoundException(String.format(
+                        "User with id %s not found when trying to create item: %s", userId, itemDto)));
 
         // Call the create method
         Exception exception = assertThrows(NotFoundException.class,
@@ -119,7 +119,7 @@ class ItemServiceUnitTest {
         // Assert the result
         assertThat(exception.getMessage(), equalTo(
                 String.format("User with id %s not found when trying to create item: %s", userId, itemDto)));
-        verify(userRepository, times(1)).findById(anyLong());
+        verify(userService, times(1)).findById(anyLong());
         verify(requestRepository, times(0)).findById(anyLong());
         verify(itemRepository, times(0)).save(any(Item.class));
 
@@ -257,7 +257,6 @@ class ItemServiceUnitTest {
         List<Comment> comments = getCommentsForItem(targetItem, requestingUser);
 
 
-        when((userRepository.findById(userId))).thenReturn(Optional.of(requestingUser));
         when(itemRepository.findById(itemId)).thenReturn(Optional.of(targetItem));
         when(commentRepository.findAllByItemIdIn(List.of(itemId))).thenReturn(comments);
 
@@ -273,8 +272,8 @@ class ItemServiceUnitTest {
         assertThat(itemDto.getLastBooking(), nullValue());
         assertThat(itemDto.getNextBooking(), nullValue());
         assertThat(itemDto.getRentCounter(), nullValue());
-        verify(userRepository, times(1))
-                .findById(anyLong());
+        verify(userService, times(1))
+                .existsById(anyLong());
         verify(itemRepository, times(1))
                 .findById(anyLong());
         verify(bookingRepository, times(0))
@@ -300,8 +299,8 @@ class ItemServiceUnitTest {
         Pageable page = mock(Pageable.class);
         List<BookingsByItem> bookings = getBookings(item1, anotherUser);
         List<Comment> comments = getCommentsForItem(item1, anotherUser);
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(owner));
+        when(userService.findById(userId))
+                .thenReturn(owner);
         when(itemRepository.findAllByOwnerId(owner.getId(), page))
                 .thenReturn(itemList);
         when(bookingRepository.findDatesByItemId(
@@ -331,7 +330,7 @@ class ItemServiceUnitTest {
         assertThat(itemDtos.get(0).getRentCounter(), equalTo(bookings.get(0).getRentCounter()));
         assertThat(itemDtos.get(1).getLastBooking(), nullValue());
         assertThat(itemDtos.get(1).getName(), equalTo(item2.getName()));
-        verify(userRepository, times(1))
+        verify(userService, times(1))
                 .findById(anyLong());
         verify(itemRepository, times(1))
                 .findAllByOwnerId(anyLong(), any(Pageable.class));
@@ -351,8 +350,6 @@ class ItemServiceUnitTest {
         User user = getUser(1);
         User owner = getUser(2);
 
-
-        when(userRepository.existsById(userId)).thenReturn(true);
 
         List<Item> foundItems = new ArrayList<>();
         Item item1 = getItem(1, owner, null);
@@ -387,7 +384,7 @@ class ItemServiceUnitTest {
         assertThat(itemDtos.get(0).getRentCounter(), nullValue());
         assertThat(itemDtos.get(1).getLastBooking(), nullValue());
         assertThat(itemDtos.get(1).getName(), equalTo(item2.getName()));
-        verify(userRepository, times(1))
+        verify(userService, times(1))
                 .existsById(anyLong());
         verify(itemRepository, times(1))
                 .findAllByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCaseAndAvailableTrue(
@@ -405,9 +402,6 @@ class ItemServiceUnitTest {
         String text = "";
 
 
-        when(userRepository.existsById(userId)).thenReturn(true);
-
-
         Pageable page = mock(Pageable.class);
 
 
@@ -417,7 +411,7 @@ class ItemServiceUnitTest {
         // Assertions
         assertThat(itemDtos, notNullValue());
         assertThat(itemDtos, hasSize(0));
-        verify(userRepository, times(1))
+        verify(userService, times(1))
                 .existsById(anyLong());
         verify(itemRepository, times(0))
                 .findAllByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCaseAndAvailableTrue(
@@ -435,7 +429,10 @@ class ItemServiceUnitTest {
         String text = "search text";
         Pageable page = mock(Pageable.class);
 
-        when(userRepository.existsById(userId)).thenReturn(false);
+        doThrow(new NotFoundException(String.format(
+                "User with id %s not found when trying to search for item by search text", userId)))
+                .when(userService)
+                .existsById(userId);
 
         // Call the searchByNameAndDescr method
         Exception exception = assertThrows(NotFoundException.class,
@@ -444,7 +441,7 @@ class ItemServiceUnitTest {
         // Assertions
         assertThat(exception.getMessage(), equalTo(
                 String.format("User with id %s not found when trying to search for item by search text", userId)));
-        verify(userRepository, times(1))
+        verify(userService, times(1))
                 .existsById(anyLong());
         verify(itemRepository, times(0))
                 .findAllByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCaseAndAvailableTrue(
@@ -469,13 +466,16 @@ class ItemServiceUnitTest {
 
         Item item = getItem(1, owner, null);
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(author));
-        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(userService.findById(userId))
+                .thenReturn(author);
+        when(itemRepository.findById(itemId))
+                .thenReturn(Optional.of(item));
         when(bookingRepository.existsByItemIdAndBookerIdAndEndBeforeAndStatus(
-                eq(itemId), eq(userId), any(LocalDateTime.class), eq(APPROVED))).thenReturn(true);
+                eq(itemId), eq(userId), any(LocalDateTime.class), eq(APPROVED)))
+                .thenReturn(true);
 
-        Comment createdComment = new Comment(1L, commentDto.getText(), item, author);
-        when(commentRepository.save(any(Comment.class))).then(returnsFirstArg());
+        when(commentRepository.save(any(Comment.class)))
+                .then(returnsFirstArg());
 
         // Call the create method
         CommentDto createdCommentDto = itemService.create(commentDto, itemId, userId);
@@ -484,7 +484,7 @@ class ItemServiceUnitTest {
         assertThat(createdCommentDto, notNullValue());
         assertThat(createdCommentDto.getId(), equalTo(commentDto.getId()));
         assertThat(createdCommentDto.getText(), equalTo(commentDto.getText()));
-        verify(userRepository, times(1))
+        verify(userService, times(1))
                 .findById(anyLong());
         verify(itemRepository, times(1))
                 .findById(anyLong());
@@ -507,8 +507,8 @@ class ItemServiceUnitTest {
 
         Item item = getItem(1, owner, null);
 
-        when(userRepository.findById(userId))
-                .thenReturn(Optional.of(author));
+        when(userService.findById(userId))
+                .thenReturn(author);
         when(itemRepository.findById(itemId))
                 .thenReturn(Optional.of(item));
         when(bookingRepository.existsByItemIdAndBookerIdAndEndBeforeAndStatus(
@@ -522,7 +522,7 @@ class ItemServiceUnitTest {
         // Assertions
         assertThat(exception.getMessage(), equalTo(
                 String.format("User with id: %s did not rent item with id: %s to comment it", userId, itemId)));
-        verify(userRepository, times(1))
+        verify(userService, times(1))
                 .findById(anyLong());
         verify(itemRepository, times(1))
                 .findById(anyLong());
@@ -564,22 +564,6 @@ class ItemServiceUnitTest {
             default:
                 return new Item();
         }
-    }
-
-    private ItemRequestDto getItemRequestDto(ItemRequest request, List<Item> items) {
-        return ItemRequestDto.builder().id(request.getId())
-                .description(request.getDescription())
-                .created(request.getCreated())
-                .items(items.stream()
-                        .map(item -> ItemDto.builder()
-                                .id(item.getId())
-                                .name(item.getName())
-                                .description(item.getDescription())
-                                .available(item.getAvailable())
-                                .comments(Collections.emptyList())
-                                .requestId(request.getId())
-                                .build()).collect(Collectors.toList()))
-                .build();
     }
 
     private List<Comment> getCommentsForItem(Item item, User author) {
