@@ -1,4 +1,5 @@
---DROP ALL OBJECTS;
+DROP ALL OBJECTS;
+
 
 CREATE TABLE IF NOT EXISTS users
 (
@@ -10,24 +11,39 @@ CREATE TABLE IF NOT EXISTS users
     CONSTRAINT UQ_USER_EMAIL UNIQUE (email)
 );
 
+
+CREATE TABLE IF NOT EXISTS requests
+(
+    id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    author_id   BIGINT        NOT NULL,
+    description VARCHAR(1000) NOT NULL,
+    created     TIMESTAMP     NOT NULL,
+    CONSTRAINT fk_requests_to_users FOREIGN KEY (author_id) REFERENCES users (id)
+);
+
+
 CREATE TABLE IF NOT EXISTS items
 (
     id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    owner_id    BIGINT                                        NOT NULL,
-    name        VARCHAR(255)                                  NOT NULL,
+    owner_id    BIGINT       NOT NULL,
+    name        VARCHAR(255) NOT NULL,
     description VARCHAR(1000),
-    available   BOOLEAN                                       NOT NULL,
-    CONSTRAINT fk_items_to_users FOREIGN KEY (owner_id) REFERENCES users (id)
+    available   BOOLEAN      NOT NULL,
+    created     TIMESTAMP    NOT NULL,
+    request_id  BIGINT,
+    CONSTRAINT fk_items_to_users FOREIGN KEY (owner_id) REFERENCES users (id),
+    CONSTRAINT fk_items_to_requests FOREIGN KEY (request_id) REFERENCES requests (id)
 );
+
 
 CREATE TABLE IF NOT EXISTS bookings
 (
     id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    item_id    BIGINT,
-    start_date TIMESTAMP,
-    end_date   TIMESTAMP,
-    booker_id  BIGINT,
-    status     VARCHAR(50),
+    item_id    BIGINT      NOT NULL,
+    start_date TIMESTAMP   NOT NULL,
+    end_date   TIMESTAMP   NOT NULL,
+    booker_id  BIGINT      NOT NULL,
+    status     VARCHAR(50) NOT NULL,
     CONSTRAINT items FOREIGN KEY (item_id) REFERENCES items (id),
     CONSTRAINT users FOREIGN KEY (booker_id) REFERENCES users (id)
 );
@@ -36,9 +52,10 @@ CREATE TABLE IF NOT EXISTS bookings
 CREATE TABLE IF NOT EXISTS comments
 (
     id        BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    item_id   BIGINT,
-    author_id BIGINT,
-    text      VARCHAR(1000),
-    created   TIMESTAMP,
-    CONSTRAINT fk_comments_to_items FOREIGN KEY (item_id) REFERENCES items (id)
+    item_id   BIGINT        NOT NULL,
+    author_id BIGINT        NOT NULL,
+    text      VARCHAR(1000) NOT NULL,
+    created   TIMESTAMP     NOT NULL,
+    CONSTRAINT fk_comments_to_items FOREIGN KEY (item_id) REFERENCES items (id),
+    CONSTRAINT fk_comments_to_users FOREIGN KEY (author_id) REFERENCES users (id)
 );

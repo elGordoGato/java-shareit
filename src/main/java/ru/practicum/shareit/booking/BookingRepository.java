@@ -8,6 +8,7 @@ import ru.practicum.shareit.booking.status.Status;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface BookingRepository extends JpaRepository<Booking, Long>, QuerydslPredicateExecutor<Booking> {
     @Query("SELECT b " +
@@ -36,4 +37,12 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, Queryds
 
 
     boolean existsByItemIdAndBookerIdAndEndBeforeAndStatus(Long itemId, Long bookerId, LocalDateTime now, Status approved);
+
+    Optional<Booking> findByIdAndBookerIdNot(long bookingId, long userId);
+
+    @Query(" SELECT b " +
+            "FROM Booking b " +
+            "WHERE b.id = ?1 " +
+            "AND (b.booker.id = ?2 OR b.item.owner.id = ?2) ")
+    Optional<Booking> findByIdAndByBookerOrOwner(long bookingId, long userId);
 }

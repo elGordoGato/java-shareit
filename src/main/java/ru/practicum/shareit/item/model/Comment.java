@@ -15,21 +15,17 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Getter
 public class Comment {
+    @Column
+    private final LocalDateTime created = LocalDateTime.now();
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     @Column(nullable = false)
     private String text;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @ToString.Exclude
     private Item item;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @ToString.Exclude
     private User author;
-
-    @Column
-    private final LocalDateTime created = LocalDateTime.now();
 }

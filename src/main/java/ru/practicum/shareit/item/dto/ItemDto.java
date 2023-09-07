@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
@@ -27,11 +28,18 @@ public class ItemDto {
     @NotNull(message = "Необходимо указать доступность для аренды")
     private final Boolean available;
 
+
     private BookingShort lastBooking;
+
 
     private BookingShort nextBooking;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<CommentDto> comments;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Long rentCounter;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Long requestId;
 }

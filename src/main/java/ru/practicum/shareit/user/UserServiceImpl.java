@@ -26,9 +26,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getById(Long userId) {
-        User foundedUser = repository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("User with id %s not found when trying to get it", userId)));
+        User foundedUser = findById(userId);
         log.info("User with ID {} found: {}", userId, foundedUser);
         return UserMapper.userToDto(foundedUser);
     }
@@ -45,9 +43,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserDto update(Long userId, UserDto withNewData) {
-        User toBeUpdated = repository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(
-                        String.format("User with id %s not found when trying to update it", userId)));
+        User toBeUpdated = findById(userId);
         Optional.ofNullable(withNewData.getName()).ifPresent(toBeUpdated::setName);
         Optional.ofNullable(withNewData.getEmail()).ifPresent(toBeUpdated::setEmail);
         log.info("User with ID {} updated - new data: {}", userId, toBeUpdated);
@@ -57,12 +53,24 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void deleteById(Long userId) {
+        existsById(userId);
+        repository.deleteById(userId);
+        log.info("User with ID {} successfully deleted", userId);
+    }
+
+    @Override
+    public User findById(long userId) {
+        return repository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(
+                        String.format("User with id %s not found when trying to get it", userId)));
+    }
+
+    @Override
+    public void existsById(long userId) {
         if (!repository.existsById(userId)) {
             throw new NotFoundException(
                     String.format("User with id %s not found when trying to delete it", userId));
         }
-        repository.deleteById(userId);
-        log.info("User with ID {} successfully deleted", userId);
     }
 
 
