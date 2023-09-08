@@ -1,14 +1,14 @@
-package ru.practicum.shareit.fromServer;
+package ru.practicum.shareit.booking;
 
-import ru.practicum.shareit.booking.dto.BookingRequest;
+import ru.practicum.shareit.booking.dto.BookItemRequestDto;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
-public class DateValidator implements ConstraintValidator<DateOrder, BookingRequest> {
+public class DateValidator implements ConstraintValidator<DateOrder, BookItemRequestDto> {
 
     @Override
-    public boolean isValid(BookingRequest request, ConstraintValidatorContext context) {
+    public boolean isValid(BookItemRequestDto request, ConstraintValidatorContext context) {
         if (request.getStart() == null || request.getEnd() == null)
             return false;
         else

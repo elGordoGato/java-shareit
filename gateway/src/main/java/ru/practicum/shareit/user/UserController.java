@@ -1,10 +1,11 @@
-package ru.practicum.shareit.fromServer;
+package ru.practicum.shareit.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import javax.validation.Valid;
 
 /**
  * TODO Sprint add-controllers.
@@ -14,35 +15,35 @@ import java.util.List;
 @RequestMapping(path = "/users")
 @RequiredArgsConstructor
 public class UserController {
-    private final UserService userService;
+    private final UserClient userClient;
 
     @GetMapping
-    public List<UserDto> getAll() {
+    public ResponseEntity<Object> getAll() {
         log.info("Received request to get all users");
-        return userService.getAll();
+        return userClient.getAll();
     }
 
     @GetMapping("/{userId}")
-    public UserDto getById(@PathVariable Long userId) {
+    public ResponseEntity<Object> getById(@PathVariable Long userId) {
         log.info("Received request to get user with id: {}", userId);
-        return userService.getById(userId);
+        return userClient.getById(userId);
     }
 
     @PostMapping
-    public UserDto create(@RequestBody /*@Valid*/ UserDto user) {
+    public ResponseEntity<Object> create(@RequestBody @Valid UserDto user) {
         log.info("Received request to create user: {}", user);
-        return userService.create(user);
+        return userClient.create(user);
     }
 
     @PatchMapping("/{userId}")
-    public UserDto update(@PathVariable Long userId, @RequestBody UserDto user) {
+    public ResponseEntity<Object> update(@PathVariable Long userId, @RequestBody UserDto user) {
         log.info("Received request to update user with ID: {} - new data: {}", userId, user);
-        return userService.update(userId, user);
+        return userClient.update(userId, user);
     }
 
     @DeleteMapping("/{userId}")
-    public void deleteById(@PathVariable Long userId) {
+    public ResponseEntity<Object> deleteById(@PathVariable Long userId) {
         log.info("Received request to delete user with id: {}", userId);
-        userService.deleteById(userId);
+        return userClient.deleteById(userId);
     }
 }

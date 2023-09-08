@@ -1,8 +1,7 @@
-package ru.practicum.shareit.fromServer;
+package ru.practicum.shareit;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
@@ -19,13 +18,6 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 @Slf4j
 public class ErrorHandler {
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public Map<String, List<String>> handleConflictException(final ConflictException e) {
-        List<String> errors = List.of(e.getMessage());
-        log.warn(errors.toString());
-        return Map.of(HttpStatus.CONFLICT.getReasonPhrase(), errors);
-    }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -41,27 +33,11 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public Map<String, List<String>> handleNotFoundException(final NotFoundException e) {
-        List<String> errors = List.of(e.getMessage());
-        log.warn(errors.toString());
-        return Map.of(HttpStatus.NOT_FOUND.getReasonPhrase(), errors);
-    }
-
-    @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, List<String>> handleMissingRequestHeaderException(final MissingRequestHeaderException e) {
         List<String> errors = List.of(e.getLocalizedMessage());
         log.warn(errors.toString());
         return Map.of(HttpStatus.BAD_REQUEST.getReasonPhrase(), errors);
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.FORBIDDEN)
-    public Map<String, List<String>> handleForbiddenException(final ForbiddenException e) {
-        List<String> errors = List.of(e.getMessage());
-        log.warn(errors.toString());
-        return Map.of(HttpStatus.FORBIDDEN.getReasonPhrase(), errors);
     }
 
     @ExceptionHandler
@@ -73,26 +49,11 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleIllegalStateException(final IllegalStateException e) {
-        String error = "Unknown state: " + e.getLocalizedMessage();
+    public Map<String, String> handleIllegalArgumentException(final IllegalArgumentException e) {
+        String error = e.getLocalizedMessage();
         log.warn(List.of(error).toString());
         return Map.of("error", error, HttpStatus.BAD_REQUEST.getReasonPhrase(), HttpStatus.BAD_REQUEST.toString());
     }
 
 
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    @ResponseStatus(HttpStatus.CONFLICT)
-    public Map<String, List<String>> handleDataIntegrityViolationException(final DataIntegrityViolationException e) {
-        List<String> errors = List.of(e.getCause().getCause().getLocalizedMessage());
-        log.warn(errors.toString());
-        return Map.of(HttpStatus.CONFLICT.getReasonPhrase(), errors);
-    }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, List<String>> handleBadRequestException(final BadRequestException e) {
-        List<String> errors = List.of(e.getMessage());
-        log.warn(errors.toString());
-        return Map.of(HttpStatus.BAD_REQUEST.getReasonPhrase(), errors);
-    }
 }

@@ -1,4 +1,4 @@
-package ru.practicum.shareit.fromServer;
+package ru.practicum.shareit.item;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;

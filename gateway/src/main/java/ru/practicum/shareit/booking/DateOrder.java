@@ -1,10 +1,10 @@
-package ru.practicum.shareit.fromServer;
+package ru.practicum.shareit.booking;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;
 import java.lang.annotation.*;
 
-@Target({ElementType.TYPE})
+@Target({ElementType.PARAMETER, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Constraint(validatedBy = DateValidator.class)
