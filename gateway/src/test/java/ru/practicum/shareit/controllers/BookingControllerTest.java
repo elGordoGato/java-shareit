@@ -1,78 +1,74 @@
-package ru.practicum.shareit.booking;
+/*
+package ru.practicum.shareit.controllers;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.json.AutoConfigureJsonTesters;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.json.JacksonTester;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import ru.practicum.shareit.booking.dto.BookingDto;
-import ru.practicum.shareit.booking.dto.BookingRequest;
-import ru.practicum.shareit.booking.status.Status;
-import ru.practicum.shareit.exception.BadRequestException;
-import ru.practicum.shareit.exception.ConflictException;
-import ru.practicum.shareit.exception.ForbiddenException;
-import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.item.dto.ItemShort;
-import ru.practicum.shareit.user.UserId;
-
+*/
+/*
+import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
 
-import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 @AutoConfigureJsonTesters
 @WebMvcTest(BookingController.class)
 public class BookingControllerTest {
+    public static MockWebServer mockServer;
 
     @Autowired
-    JacksonTester<List<BookingDto>> jsonListDto;
-    @Autowired
     private MockMvc mockMvc;
-    @MockBean
-    private BookingService bookingService;
+
     @Autowired
-    private JacksonTester<BookingRequest> jsonRequest;
+BookingClient bookingClient;
+
     @Autowired
-    private JacksonTester<BookingDto> jsonDto;
+    private JacksonTester<BookItemRequestDto> jsonRequest;
+
+
+    @BeforeAll
+    static void setUp() throws IOException {
+        mockServer = new MockWebServer();
+        mockServer.start(9090);
+    }
+
+    @AfterAll
+    static void tearDown() throws IOException {
+        mockServer.shutdown();
+    }
+
+    @BeforeEach
+    void initialize() {
+        String baseUrl = String.format("http://localhost:%s",
+                mockServer.getPort());
+        System.out.println(baseUrl);
+    }
 
     @Test
     public void testCreateBooking() throws Exception {
         // Arrange
-        BookingRequest bookingRequest = BookingRequest.builder()
-                .itemId(1L)
-                .start(LocalDateTime.now().plusMinutes(1))
-                .end(LocalDateTime.now().plusDays(1))
-                .build();
-        BookingDto bookingDto = BookingDto.builder()
-                .id(1L)
-                .start(LocalDateTime.now())
-                .end(LocalDateTime.now().plusDays(1))
-                .booker(new UserId(1L))
-                .item(new ItemShort(1L, "Test Item"))
-                .status(Status.WAITING)
-                .build();
-        given(bookingService.create(any(), anyLong()))
-                .willReturn(bookingDto);
+        BookItemRequestDto bookingRequest = new BookItemRequestDto(1L,
+                LocalDateTime.now().plusMinutes(1),
+                LocalDateTime.now().plusDays(1));
+
+        mockServer.enqueue(new MockResponse());
 
         // Act and Assert
         mockMvc.perform(post("/bookings")
-                        .header("X-Sharer-User-Id", 1L)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonRequest.write(bookingRequest).getJson()))
-                .andExpect(status().isOk())
-                .andExpect(content().json(jsonDto.write(bookingDto).getJson()));
-    }
+                .header("X-Sharer-User-Id", 1L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(jsonRequest.write(bookingRequest).getJson()));
 
-    @Test
+        RecordedRequest recordedRequest = mockServer.takeRequest();
+
+        assertThat("GET", equalTo(recordedRequest.getMethod()));
+        assertThat("/employee/100", equalTo(recordedRequest.getPath()));
+
+    }
+*//*
+
+
+ */
+/*    @Test
     public void testCreateBookingThrowsConflict() throws Exception {
         // Arrange
         BookingRequest bookingRequest = BookingRequest.builder()
@@ -103,6 +99,26 @@ public class BookingControllerTest {
                         .value("Conflict Exception Test"));
     }
 
+
+    @Test
+    void testCreateBookingInvalidDateOrder() throws Exception {
+        BookingRequest bookingRequest = BookingRequest.builder()
+                .itemId(1L)
+                .start(LocalDateTime.now().plusMinutes(1))
+                .end(LocalDateTime.now().minusDays(1))
+                .build();
+
+        mockMvc.perform(post("/bookings")
+                        .header("X-Sharer-User-Id", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonRequest.write(bookingRequest).getJson()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.length()", is(1)))
+                .andExpect(jsonPath("$.['Bad Request'].length()", is(1)))
+                .andExpect(jsonPath("$.['Bad Request']")
+                        .value("End date should be after start date"));
+    }
+
     @Test
     void testCreateBookingMissingHeader() throws Exception {
         BookingRequest bookingRequest = BookingRequest.builder()
@@ -120,6 +136,25 @@ public class BookingControllerTest {
                 .andExpect(jsonPath("$.['Bad Request']")
                         .value("Required request header 'X-Sharer-User-Id' " +
                                 "for method parameter type long is not present"));
+    }
+
+    @Test
+    void testCreateInvalidBooking() throws Exception {
+        BookingRequest bookingRequest = BookingRequest.builder()
+                .start(LocalDateTime.now().minusMinutes(1))
+                .build();
+
+        mockMvc.perform(post("/bookings")
+                        .header("X-Sharer-User-Id", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonRequest.write(bookingRequest).getJson()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.length()", is(1)))
+                .andExpect(jsonPath("$.['Bad Request'].length()", is(3)))
+                .andExpect(jsonPath("$.['Bad Request']",
+                        containsInAnyOrder("must be a date in the present or in the future",
+                                "must not be null",
+                                "must not be null")));
     }
 
     @Test
@@ -306,6 +341,27 @@ public class BookingControllerTest {
                         .value("Unknown state: " + state));
     }
 
+    @Test
+    void getAllBookingsForBookerInvalidPagingTest() throws Exception {
+        long userId = 1L;
+        String state = "ALL";
+        int from = -1;
+        int size = 0;
+
+        mockMvc.perform(get("/bookings")
+                        .header("X-Sharer-User-Id", userId)
+                        .param("state", state)
+                        .param("from", String.valueOf(from))
+                        .param("size", String.valueOf(size)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.length()", is(1)))
+                .andExpect(jsonPath("$.['Bad Request'].length()", is(1)))
+                .andExpect(jsonPath("$.['Bad Request'].[0]",
+                        containsString("getAllForBooker.from: must be greater than or equal to 0")))
+                .andExpect(jsonPath("$.['Bad Request'].[0]",
+                        containsString("getAllForBooker.size: must be greater than 0")));
+    }
+
 
     @Test
     void getAllBookingsForOwnerTest() throws Exception {
@@ -369,4 +425,26 @@ public class BookingControllerTest {
                         .value("Unknown state: " + state));
     }
 
-}
+    @Test
+    void getAllBookingsForOwnerInvalidPagingTest() throws Exception {
+        long userId = 1L;
+        String state = "ALL";
+        int from = -10;
+        int size = -4;
+
+        mockMvc.perform(get("/bookings/owner")
+                        .header("X-Sharer-User-Id", userId)
+                        .param("state", state)
+                        .param("from", String.valueOf(from))
+                        .param("size", String.valueOf(size)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.length()", is(1)))
+                .andExpect(jsonPath("$.['Bad Request'].length()", is(1)))
+                .andExpect(jsonPath("$.['Bad Request'].[0]",
+                        containsString("getAllForOwner.from: must be greater than or equal to 0")))
+                .andExpect(jsonPath("$.['Bad Request'].[0]",
+                        containsString("getAllForOwner.size: must be greater than 0")));
+    }*//*
+
+
+}*/

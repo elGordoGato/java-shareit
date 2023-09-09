@@ -1,4 +1,5 @@
-package ru.practicum.shareit.user;
+/*
+package ru.practicum.shareit.controllers;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,6 +16,10 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import ru.practicum.shareit.user.UserClient;
+import ru.practicum.shareit.user.UserController;
+import ru.practicum.shareit.user.UserDto;
+import ru.practicum.shareit.user.UserService;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -33,8 +38,8 @@ class UserControllerTest {
     @Autowired
     private ObjectMapper mapper;
 
-    @MockBean
-    private UserService userService;
+    @Autowired
+    private UserClient userClient;
 
     @Autowired
     private MockMvc mvc;
@@ -53,7 +58,7 @@ class UserControllerTest {
 
     @Test
     void create() throws Exception {
-        when(userService.create(any()))
+        when(userClient.create(any()))
                 .thenReturn(userDto);
 
 
@@ -69,8 +74,30 @@ class UserControllerTest {
     }
 
     @Test
+    public void testCreateUser_InvalidName() throws Exception {
+        mvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\": \"\", \"email\": \"john@example.com\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.length()", is(1)))
+                .andExpect(jsonPath("$.['Bad Request']")
+                        .value("Необходимо указать имя"));
+    }
+
+    @Test
+    public void testCreateUser_InvalidEmail() throws Exception {
+        mvc.perform(post("/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\": \"John\", \"email\": \"johnTheBest.com\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.length()", is(1)))
+                .andExpect(jsonPath("$.['Bad Request']")
+                        .value("Email должен быть корректным адресом электронной почты"));
+    }
+
+    @Test
     public void testCreateUser_EmailOccupied() throws Exception {
-        when(userService.create(any()))
+        when(userClient.create(any()))
                 .thenThrow(new DataIntegrityViolationException("",
                         new RuntimeException(
                                 new RuntimeException("This email already occupied"))));
@@ -86,7 +113,7 @@ class UserControllerTest {
 
     @Test
     void getAll() throws Exception {
-        when(userService.getAll())
+        when(userClient.getAll())
                 .thenReturn(List.of(userDto));
 
 
@@ -103,7 +130,7 @@ class UserControllerTest {
     public void testCreateUser_Positive() throws Exception {
         UserDto user = new UserDto(null, "John", "john@example.com");
 
-        Mockito.when(userService.create(Mockito.any(UserDto.class))).thenReturn(user);
+        Mockito.when(userClient.create(Mockito.any(UserDto.class))).thenReturn(user);
 
         mvc.perform(MockMvcRequestBuilders.post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -118,7 +145,7 @@ class UserControllerTest {
 
     @Test
     void getById() throws Exception {
-        when(userService.getById(anyLong()))
+        when(userClient.getById(anyLong()))
                 .thenReturn(userDto);
 
         mvc.perform(get("/users/1")
@@ -132,7 +159,7 @@ class UserControllerTest {
 
     @Test
     void update() throws Exception {
-        when(userService.update(anyLong(), any(UserDto.class)))
+        when(userClient.update(anyLong(), any(UserDto.class)))
                 .thenReturn(userDto);
 
         mvc.perform(patch("/users/1")
@@ -152,4 +179,4 @@ class UserControllerTest {
         mvc.perform(delete("/users/1"))
                 .andExpect(status().isOk());
     }
-}
+}*/

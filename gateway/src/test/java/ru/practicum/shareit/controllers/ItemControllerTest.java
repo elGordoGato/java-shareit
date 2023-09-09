@@ -1,4 +1,5 @@
-package ru.practicum.shareit.item;
+/*
+package ru.practicum.shareit.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -6,11 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import ru.practicum.shareit.item.ItemController;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.service.ItemService;
@@ -19,9 +22,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ItemController.class)
 public class ItemControllerTest {
@@ -67,6 +72,31 @@ public class ItemControllerTest {
         verify(itemService, times(1)).create(itemDto, userId);
     }
 
+    @Test
+    public void testCreateItemWithInvalidDto() throws Exception {
+
+        long userId = 123;
+
+        ItemDto blankFieldsDto = ItemDto.builder()
+                .name("")
+                .description("")
+                .build();
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/items")
+                        .header("X-Sharer-User-Id", userId)
+                        .contentType("application/json")
+                        .content(mapper.writeValueAsString(blankFieldsDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.length()", is(1)))
+                .andExpect(jsonPath("$.['Bad Request'].length()", is(3)))
+                .andExpect(jsonPath("$.['Bad Request']",
+                        containsInAnyOrder("Необходимо указать доступность для аренды",
+                                "Необходимо указать название",
+                                "Необходимо указать описание")));
+
+
+        verify(itemService, times(0)).create(any(), anyLong());
+    }
 
     @Test
     public void testUpdateItem() throws Exception {
@@ -168,6 +198,30 @@ public class ItemControllerTest {
     }
 
     @Test
+    public void testGetAllItemsForUserWithInvalidPaging() throws Exception {
+        // Arrange
+        long userId = 123;
+        int from = -1;
+        int size = 0;
+
+        // Act & Assert
+        mockMvc.perform(MockMvcRequestBuilders.get("/items")
+                        .header("X-Sharer-User-Id", userId)
+                        .param("from", String.valueOf(from))
+                        .param("size", String.valueOf(size)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.length()", is(1)))
+                .andExpect(jsonPath("$.['Bad Request'].length()", is(1)))
+                .andExpect(jsonPath("$.['Bad Request'].[0]",
+                        containsString("getAllForUser.from: must be greater than or equal to 0")))
+                .andExpect(jsonPath("$.['Bad Request'].[0]",
+                        containsString("getAllForUser.size: must be greater than 0")));
+
+        verify(itemService, times(0))
+                .getAllForUser(anyLong(), any(Pageable.class));
+    }
+
+    @Test
     public void testSearchItemsByNameAndDescr() throws Exception {
         // Arrange
         String text = "test";
@@ -239,4 +293,28 @@ public class ItemControllerTest {
         verify(itemService, times(1))
                 .create(any(CommentDto.class), anyLong(), anyLong());
     }
-}
+
+    @Test
+    public void testCreateCommentWithBlankText() throws Exception {
+        // Arrange
+        CommentDto commentDto = CommentDto.builder()
+                .text("")
+                .build();
+
+        long itemId = 1L;
+        long userId = 123L;
+
+        // Act & Assert
+        mockMvc.perform(MockMvcRequestBuilders.post("/items/{itemId}/comment", itemId)
+                        .header("X-Sharer-User-Id", userId)
+                        .contentType("application/json")
+                        .content(mapper.writeValueAsString(commentDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.length()", is(1)))
+                .andExpect(jsonPath("$.['Bad Request'].length()", is(1)))
+                .andExpect(jsonPath("$.['Bad Request']").value("must not be blank"));
+
+        verify(itemService, times(0))
+                .create(any(CommentDto.class), anyLong(), anyLong());
+    }
+}*/

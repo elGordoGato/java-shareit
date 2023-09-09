@@ -4,6 +4,8 @@ import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
 
 import javax.persistence.*;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -28,11 +30,11 @@ public class User {
     private Long id;
 
     @Column(nullable = false)
-    //@NotBlank
+    @NotBlank
     private String name;
 
     @Column(nullable = false, unique = true)
-    //@Email(message = "Email должен быть корректным адресом электронной почты")
+    @Email(message = "Email должен быть корректным адресом электронной почты")
     private String email;
 
     @Override

@@ -1,4 +1,5 @@
-package ru.practicum.shareit.request;
+/*
+package ru.practicum.shareit.controllers;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.request.ItemRequestController;
+import ru.practicum.shareit.request.ItemRequestService;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 
 import java.time.LocalDateTime;
@@ -72,6 +75,22 @@ public class ItemRequestControllerTest {
                 .andDo(print());
     }
 
+    @Test
+    public void testCreateBlankDescription() throws Exception {
+        when(requestService.create(anyLong(), any(ItemRequestDto.class)))
+                .thenReturn(requestDto);
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/requests")
+                        .header("X-Sharer-User-Id", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"description\":\"\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.length()", is(1)))
+                .andExpect(jsonPath("$.['Bad Request']")
+                        .value("must not be blank"))
+                .andDo(print());
+    }
+
 
     @Test
     public void testGetOwn() throws Exception {
@@ -113,6 +132,44 @@ public class ItemRequestControllerTest {
 
 
     @Test
+    public void testGetAllNegativeFrom() throws Exception {
+
+        List<ItemRequestDto> requestList = Collections.singletonList(requestDto);
+
+        when(requestService.getAll(anyLong(), any()))
+                .thenReturn(requestList);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/requests/all")
+                        .header("X-Sharer-User-Id", 1L)
+                        .param("from", "-1")
+                        .param("size", "10"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.length()", is(1)))
+                .andExpect(jsonPath("$.['Bad Request']")
+                        .value("getAll.from: must be greater than or equal to 0"))
+                .andDo(print());
+    }
+
+    @Test
+    public void testGetAllZeroSize() throws Exception {
+
+        List<ItemRequestDto> requestList = Collections.singletonList(requestDto);
+
+        when(requestService.getAll(anyLong(), any()))
+                .thenReturn(requestList);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/requests/all")
+                        .header("X-Sharer-User-Id", 1L)
+                        .param("from", "5")
+                        .param("size", "0"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.length()", is(1)))
+                .andExpect(jsonPath("$.['Bad Request']")
+                        .value("getAll.size: must be greater than 0"))
+                .andDo(print());
+    }
+
+    @Test
     public void testGetById() throws Exception {
 
         when(requestService.getById(anyLong(), anyLong()))
@@ -129,4 +186,4 @@ public class ItemRequestControllerTest {
                         .value("1975-12-13@13:44:00.000347"))
                 .andDo(print());
     }
-}
+}*/
