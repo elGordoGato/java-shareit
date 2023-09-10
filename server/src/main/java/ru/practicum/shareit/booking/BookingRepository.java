@@ -3,12 +3,8 @@ package ru.practicum.shareit.booking;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
-import org.springframework.data.repository.query.Param;
-import ru.practicum.shareit.booking.dto.BookingsByItem;
 import ru.practicum.shareit.booking.status.Status;
 
-import javax.persistence.NamedNativeQuery;
-import javax.persistence.SqlResultSetMapping;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -20,8 +16,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, Queryds
             "AND b.status = 'APPROVED'")
     List<Booking> findAllByDateInterfering(LocalDateTime start, LocalDateTime end);
 
-    @Query(nativeQuery = true)
-    List<BookingsByItem> findDatesByItemId(String itemIds, LocalDateTime now);
+    @Query("SELECT ")
+    List<Booking> findLastBookings(List<Long> itemIds, LocalDateTime now);
 
 
     boolean existsByItemIdAndBookerIdAndEndBeforeAndStatus(Long itemId, Long bookerId, LocalDateTime now, Status approved);

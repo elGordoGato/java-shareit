@@ -142,7 +142,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private BookingsByItem getBookingsByItem(long itemId) {
-        return bookingRepository.findDatesByItemId(
+        return bookingRepository.findLastBookings(
                         String.valueOf(itemId),
                         now())
                 .stream()
@@ -157,7 +157,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private Map<Long, BookingsByItem> getBookingsMap(Map<Long, Item> itemMap) {
-        return bookingRepository.findDatesByItemId(
+        return bookingRepository.findLastBookings(
                         (itemMap.keySet().stream().),
                         now())
                 .stream()

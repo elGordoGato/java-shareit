@@ -147,7 +147,7 @@ class ItemServiceUnitTest {
                 .thenReturn(Optional.of(targetItem));
         when(itemRepository.save(any(Item.class)))
                 .then(returnsFirstArg());
-        when(bookingRepository.findDatesByItemId(eq(List.of(itemId)), any(LocalDateTime.class)))
+        when(bookingRepository.findLastBookings(eq(List.of(itemId)), any(LocalDateTime.class)))
                 .thenReturn(bookings);
         when(commentRepository.findAllByItemIdIn(List.of(itemId)))
                 .thenReturn(comments);
@@ -169,7 +169,7 @@ class ItemServiceUnitTest {
         verify(itemRepository, times(1))
                 .save(any());
         verify(bookingRepository, times(1))
-                .findDatesByItemId(anyList(), any(LocalDateTime.class));
+                .findLastBookings(anyList(), any(LocalDateTime.class));
         verify(commentRepository, times(1))
                 .findAllByItemIdIn(anyList());
     }
@@ -204,7 +204,7 @@ class ItemServiceUnitTest {
         verify(itemRepository, times(0))
                 .save(any());
         verify(bookingRepository, times(0))
-                .findDatesByItemId(anyList(), any(LocalDateTime.class));
+                .findLastBookings(anyList(), any(LocalDateTime.class));
         verify(commentRepository, times(0))
                 .findAllByItemIdIn(anyList());
     }
@@ -236,7 +236,7 @@ class ItemServiceUnitTest {
         verify(itemRepository, times(0))
                 .save(any());
         verify(bookingRepository, times(0))
-                .findDatesByItemId(anyList(), any(LocalDateTime.class));
+                .findLastBookings(anyList(), any(LocalDateTime.class));
         verify(commentRepository, times(0))
                 .findAllByItemIdIn(anyList());
     }
@@ -277,7 +277,7 @@ class ItemServiceUnitTest {
         verify(itemRepository, times(1))
                 .findById(anyLong());
         verify(bookingRepository, times(0))
-                .findDatesByItemId(anyList(), any(LocalDateTime.class));
+                .findLastBookings(anyList(), any(LocalDateTime.class));
         verify(commentRepository, times(1))
                 .findAllByItemIdIn(anyList());
     }
@@ -303,7 +303,7 @@ class ItemServiceUnitTest {
                 .thenReturn(owner);
         when(itemRepository.findAllByOwnerId(owner.getId(), page))
                 .thenReturn(itemList);
-        when(bookingRepository.findDatesByItemId(
+        when(bookingRepository.findLastBookings(
                 eq(itemList.stream()
                         .map(Item::getId)
                         .collect(Collectors.toList())),
@@ -335,7 +335,7 @@ class ItemServiceUnitTest {
         verify(itemRepository, times(1))
                 .findAllByOwnerId(anyLong(), any(Pageable.class));
         verify(bookingRepository, times(1))
-                .findDatesByItemId(anyList(), any(LocalDateTime.class));
+                .findLastBookings(anyList(), any(LocalDateTime.class));
         verify(commentRepository, times(1))
                 .findAllByItemIdIn(anyList());
         // Add more assertions as needed
@@ -390,7 +390,7 @@ class ItemServiceUnitTest {
                 .findAllByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCaseAndAvailableTrue(
                         anyString(), anyString(), any(Pageable.class));
         verify(bookingRepository, times(0))
-                .findDatesByItemId(anyList(), any(LocalDateTime.class));
+                .findLastBookings(anyList(), any(LocalDateTime.class));
         verify(commentRepository, times(1))
                 .findAllByItemIdIn(anyList());
     }
@@ -417,7 +417,7 @@ class ItemServiceUnitTest {
                 .findAllByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCaseAndAvailableTrue(
                         anyString(), anyString(), any(Pageable.class));
         verify(bookingRepository, times(0))
-                .findDatesByItemId(anyList(), any(LocalDateTime.class));
+                .findLastBookings(anyList(), any(LocalDateTime.class));
         verify(commentRepository, times(0))
                 .findAllByItemIdIn(anyList());
     }
@@ -447,7 +447,7 @@ class ItemServiceUnitTest {
                 .findAllByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCaseAndAvailableTrue(
                         anyString(), anyString(), any(Pageable.class));
         verify(bookingRepository, times(0))
-                .findDatesByItemId(anyList(), any(LocalDateTime.class));
+                .findLastBookings(anyList(), any(LocalDateTime.class));
         verify(commentRepository, times(0))
                 .findAllByItemIdIn(anyList());
     }

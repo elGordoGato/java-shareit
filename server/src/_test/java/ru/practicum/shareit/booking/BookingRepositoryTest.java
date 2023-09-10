@@ -88,7 +88,7 @@ class BookingRepositoryTest {
         Booking bookingForTablePast = getBookingForTablePastApproved(table, userWithChair);
         Booking bookingForTablePastRejected = getBookingForTablePastRejected(table, userWithChair);
 
-        List<BookingsByItem> bookingsByItem = bookingRepository.findDatesByItemId(String.valueOf(table.getId()), now());
+        List<BookingsByItem> bookingsByItem = bookingRepository.findLastBookings(String.valueOf(table.getId()), now());
         assertThat(bookingsByItem, hasSize(1));
         assertThat(bookingsByItem.get(0).getItemId(), equalTo(table.getId()));
         assertThat(bookingsByItem.get(0).getLastBooking(), equalTo(bookingForTablePast));
