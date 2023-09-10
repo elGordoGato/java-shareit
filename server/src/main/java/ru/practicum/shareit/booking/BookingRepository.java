@@ -22,7 +22,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, Queryds
             "                          FROM Booking b1 " +
             "                          WHERE b1.item.id = b.item.id " +
             "                          AND b1.start <= ?2) " +
-            "         AND b.item.id IN ?1 ")
+            "         AND b.item.id IN ?1 " +
+            "         AND b.status = 'APPROVED' ")
     List<Booking> findLastBookings(List<Long> itemIds, LocalDateTime now);
 
     @Query("SELECT b " +
@@ -31,7 +32,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, Queryds
             "                          FROM Booking b1 " +
             "                          WHERE b1.item.id = b.item.id " +
             "                          AND b1.start > ?2) " +
-            "         AND b.item.id IN ?1 ")
+            "         AND b.item.id IN ?1 " +
+            "         AND b.status = 'APPROVED' ")
     List<Booking> findNextBookings(List<Long> itemIds, LocalDateTime now);
 
 
