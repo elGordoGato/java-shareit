@@ -10,7 +10,7 @@ services:
       - server
     environment:
       - SHAREIT_SERVER_URL=http://server:9090
-#http://server:9090
+  #http://server:9090
 
   server:
     build: ./server

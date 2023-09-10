@@ -4,10 +4,6 @@ import lombok.Getter;
 import lombok.ToString;
 import ru.practicum.shareit.booking.Booking;
 
-import javax.persistence.ColumnResult;
-import javax.persistence.ConstructorResult;
-import javax.persistence.SqlResultSetMapping;
-
 @Getter
 @ToString
 public class BookingsByItem {
