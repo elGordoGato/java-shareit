@@ -10,6 +10,7 @@ services:
       - server
     environment:
       - SHAREIT_SERVER_URL=http://server:9090
+#http://server:9090
 
   server:
     build: ./server
@@ -30,6 +31,8 @@ services:
   db:
     image: postgres:13.7-alpine
     container_name: db
+    ports:
+      - "6541:5432"
     volumes:
       - /var/lib/postgresql/data/
     environment:

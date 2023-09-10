@@ -3,9 +3,12 @@ package ru.practicum.shareit.booking;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
+import org.springframework.data.repository.query.Param;
 import ru.practicum.shareit.booking.dto.BookingsByItem;
 import ru.practicum.shareit.booking.status.Status;
 
+import javax.persistence.NamedNativeQuery;
+import javax.persistence.SqlResultSetMapping;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -17,23 +20,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, Queryds
             "AND b.status = 'APPROVED'")
     List<Booking> findAllByDateInterfering(LocalDateTime start, LocalDateTime end);
 
-
-    @Query("SELECT new ru.practicum.shareit.booking.dto.BookingsByItem( " +
-            "   b1.item.id, b2, b3, COUNT(b1.id)) " +
-            "FROM Booking b1 " +
-            "LEFT JOIN Booking b2 ON b1.item.id = b2.item.id " +
-            "AND b2.start IN (SELECT MAX(b4.start) " +
-            "                 FROM Booking b4 " +
-            "                 WHERE b4.start <= ?2 AND b4.item.id IN ?1 " +
-            "                 GROUP BY b4.item.id) " +
-            "LEFT JOIN Booking b3 ON b1.item.id = b3.item.id " +
-            "AND b3.start IN (SELECT MIN(b5.start) " +
-            "                 FROM Booking b5 " +
-            "                 WHERE b5.start > ?2 AND b5.item.id IN ?1 " +
-            "                 GROUP BY b5.item.id) " +
-            "WHERE b1.item.id IN ?1 AND b1.status = 'APPROVED' " +
-            "GROUP BY b1.item.id")
-    List<BookingsByItem> findDatesByItemId(List<Long> itemIds, LocalDateTime now);
+    @Query(nativeQuery = true)
+    List<BookingsByItem> findDatesByItemId(String itemIds, LocalDateTime now);
 
 
     boolean existsByItemIdAndBookerIdAndEndBeforeAndStatus(Long itemId, Long bookerId, LocalDateTime now, Status approved);
@@ -46,3 +34,46 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, Queryds
             "AND (b.booker.id = ?2 OR b.item.owner.id = ?2) ")
     Optional<Booking> findByIdAndByBookerOrOwner(long bookingId, long userId);
 }
+
+/*("SELECT new ru.practicum.shareit.booking.dto.BookingsByItem( " +
+        "   b1.item.id, b2, b3, COUNT(b1.id)) " +
+        "FROM Booking b1 " +
+        "LEFT JOIN Booking b2 ON b1.item.id = b2.item.id " +
+        "AND b2.start = (SELECT MAX(b4.start) " +
+        "                 FROM Booking b4 " +
+        "                 WHERE b4.start <= ?2 AND b4.item.id IN ?1 " +
+        "                 GROUP BY b4.item.id) " +
+        "LEFT JOIN Booking b3 ON b1.item.id = b3.item.id " +
+        "AND b3.start = (SELECT MIN(b5.start) " +
+        "                 FROM Booking b5 " +
+        "                 WHERE b5.start > ?2 AND b5.item.id IN ?1 " +
+        "                 GROUP BY b5.item.id) " +
+        "WHERE b1.item.id IN ?1 AND b1.status = 'APPROVED' " +
+        "GROUP BY b1.item.id, b2, b3")*/
+
+////////////////////////////////////////////////////////
+/*"WITH bookingByItem AS ( " +
+        "SELECT b.item.id AS itemId, " +
+        "MAX(b1.id) AS last, " +
+        "MIN(b2.id) AS next, " +
+        "COUNT(b.id) AS rentCounter " +
+        "FROM Booking b " +
+        "LEFT JOIN Booking b1 ON b1.id = b.id " +
+        "AND b1.start = (SELECT MAX(b.start) " +
+        "                 FROM Booking b " +
+        "                 WHERE b.start <= ?2 AND b.item.id = b1.item.id " +
+        "                ) " +
+        "LEFT JOIN Booking b2 ON b.id = b2.id " +
+        "AND b2.start = (SELECT MIN(b.start) " +
+        "                 FROM Booking b " +
+        "                 WHERE b.start > ?2 AND b.item.id = b2.item.id " +
+        "                ) " +
+        "WHERE b1.item.id IN ?1 AND b1.status = 'APPROVED' " +
+        "GROUP BY b.item.id) " +
+        "SELECT new ru.practicum.shareit.booking.dto.BookingsByItem( " +
+        "bi.itemId, b1, b2, bi.rentCounter " +
+        "FROM bookingByItem bi " +
+        "LEFT JOIN Booking b1 ON b1.item.it = bi.itemId AND b1.id = bi.last " +
+        "LEFT JOIN Booking b2 ON b2.item.it = bi.itemId AND b2.id = bi.next ")*/
+
+

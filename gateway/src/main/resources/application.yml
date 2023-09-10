@@ -14,4 +14,5 @@ server:
     port: 8080
 
 shareit-server:
-  url: http://localhost:9090
+  url: ${SHAREIT_SERVER_URL}
+#http://localhost:9090

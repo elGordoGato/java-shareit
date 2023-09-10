@@ -143,7 +143,7 @@ public class ItemServiceImpl implements ItemService {
 
     private BookingsByItem getBookingsByItem(long itemId) {
         return bookingRepository.findDatesByItemId(
-                        Collections.singletonList(itemId),
+                        String.valueOf(itemId),
                         now())
                 .stream()
                 .findAny()
@@ -158,7 +158,7 @@ public class ItemServiceImpl implements ItemService {
 
     private Map<Long, BookingsByItem> getBookingsMap(Map<Long, Item> itemMap) {
         return bookingRepository.findDatesByItemId(
-                        new ArrayList<>(itemMap.keySet()),
+                        (itemMap.keySet().stream().),
                         now())
                 .stream()
                 .collect(Collectors.toMap(
