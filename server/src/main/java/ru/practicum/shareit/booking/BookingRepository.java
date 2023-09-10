@@ -18,18 +18,20 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, Queryds
 
     @Query("SELECT b " +
             "FROM Booking b " +
-            "WHERE b.start <= ?2 " +
-            "AND b.item.id IN ?1 " +
-            "GROUP BY b.item " +
-            "HAVING b.start = MAX(b.start)")
+            "         WHERE b.start = (SELECT MAX(b1.start) " +
+            "                          FROM Booking b1 " +
+            "                          WHERE b1.item.id = b.item.id " +
+            "                          AND b1.start <= ?2) " +
+            "         AND b.item.id IN ?1 ")
     List<Booking> findLastBookings(List<Long> itemIds, LocalDateTime now);
 
     @Query("SELECT b " +
             "FROM Booking b " +
-            "WHERE b.start > ?2 " +
-            "AND b.item.id IN ?1 " +
-            "GROUP BY b.item " +
-            "HAVING b.start = MIN(b.start)")
+            "         WHERE b.start = (SELECT MIN(b1.start) " +
+            "                          FROM Booking b1 " +
+            "                          WHERE b1.item.id = b.item.id " +
+            "                          AND b1.start > ?2) " +
+            "         AND b.item.id IN ?1 ")
     List<Booking> findNextBookings(List<Long> itemIds, LocalDateTime now);
 
 
