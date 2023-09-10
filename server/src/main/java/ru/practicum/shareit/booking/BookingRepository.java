@@ -16,8 +16,21 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, Queryds
             "AND b.status = 'APPROVED'")
     List<Booking> findAllByDateInterfering(LocalDateTime start, LocalDateTime end);
 
-    @Query("SELECT ")
+    @Query("SELECT b " +
+            "FROM Booking b " +
+            "WHERE b.start <= ?2 " +
+            "AND b.item.id IN ?1 " +
+            "GROUP BY b.item " +
+            "HAVING b.start = MAX(b.start)")
     List<Booking> findLastBookings(List<Long> itemIds, LocalDateTime now);
+
+    @Query("SELECT b " +
+            "FROM Booking b " +
+            "WHERE b.start > ?2 " +
+            "AND b.item.id IN ?1 " +
+            "GROUP BY b.item " +
+            "HAVING b.start = MIN(b.start)")
+    List<Booking> findNextBookings(List<Long> itemIds, LocalDateTime now);
 
 
     boolean existsByItemIdAndBookerIdAndEndBeforeAndStatus(Long itemId, Long bookerId, LocalDateTime now, Status approved);

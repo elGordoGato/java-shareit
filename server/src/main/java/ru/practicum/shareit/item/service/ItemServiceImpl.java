@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.dto.BookingsByItem;
 import ru.practicum.shareit.exception.BadRequestException;
@@ -142,12 +143,18 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private BookingsByItem getBookingsByItem(long itemId) {
-        return bookingRepository.findLastBookings(
-                        String.valueOf(itemId),
-                        now())
-                .stream()
-                .findAny()
-                .orElse(null);
+        return new BookingsByItem(itemId,
+                bookingRepository.findLastBookings(
+                                List.of(itemId),
+                                now())
+                        .stream()
+                        .findAny()
+                        .orElse(null),
+                bookingRepository.findNextBookings(List.of(itemId),
+                                now())
+                        .stream()
+                        .findAny()
+                        .orElse(null));
     }
 
     private Map<Long, Item> itemListToMap(List<Item> itemList) {
@@ -157,12 +164,22 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private Map<Long, BookingsByItem> getBookingsMap(Map<Long, Item> itemMap) {
-        return bookingRepository.findLastBookings(
-                        (itemMap.keySet().stream().),
-                        now())
-                .stream()
+        Map<Long, Booking> lastBookings = bookingRepository.findLastBookings(
+                        new ArrayList<>(itemMap.keySet()),
+                        now()).stream()
+                .collect(Collectors.toMap(b -> b.getItem().getId(),
+                        Function.identity()));
+        Map<Long, Booking> nextBookings = bookingRepository.findNextBookings(
+                        new ArrayList<>(itemMap.keySet()),
+                        now()).stream()
+                .collect(Collectors.toMap(b -> b.getItem().getId(),
+                        Function.identity()));
+        return itemMap.keySet().stream()
+                .map(id -> new BookingsByItem(id, lastBookings.get(id), nextBookings.get(id)))
                 .collect(Collectors.toMap(
-                        BookingsByItem::getItemId, Function.identity()));
+                        BookingsByItem::getItemId,
+                        Function.identity()));
+
     }
 
     private Map<Long, List<Comment>> getCommentMap(Map<Long, Item> itemMap) {
