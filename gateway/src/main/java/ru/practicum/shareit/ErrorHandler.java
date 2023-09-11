@@ -52,7 +52,8 @@ public class ErrorHandler {
     public Map<String, String> handleIllegalArgumentException(final IllegalArgumentException e) {
         String error = e.getLocalizedMessage();
         log.warn(List.of(error).toString());
-        return Map.of("error", error, HttpStatus.BAD_REQUEST.getReasonPhrase(), HttpStatus.BAD_REQUEST.toString());
+        return Map.of("error", error,
+                HttpStatus.BAD_REQUEST.getReasonPhrase(), HttpStatus.BAD_REQUEST.toString());
     }
 
 

@@ -15,4 +15,3 @@ server:
 
 shareit-server:
   url: ${SHAREIT_SERVER_URL}
-#http://localhost:9090
